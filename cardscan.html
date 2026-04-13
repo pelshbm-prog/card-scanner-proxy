@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>CardScan</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#04080f;color:#e2e8f0;font-family:'Share Tech Mono',monospace;min-height:100vh}
+.header{border-bottom:1px solid #0f172a;background:linear-gradient(180deg,#070d1a 0%,#04080f 100%);padding:18px 16px}
+.logo{font-family:'Orbitron',sans-serif;font-size:28px;font-weight:900;color:#e2e8f0;letter-spacing:4px}
+.logo span{color:#f59e0b}
+.subtitle{font-size:10px;color:#334155;letter-spacing:3px;margin-top:2px}
+.content{max-width:700px;margin:0 auto;padding:20px 16px 80px}
+.auth-panel{background:linear-gradient(135deg,#070d1a 0%,#0a1020 100%);border:1px solid #1e293b;border-radius:14px;padding:24px}
+.auth-title{font-family:'Orbitron',monospace;font-size:16px;font-weight:700;color:#f59e0b;margin-bottom:6px;letter-spacing:2px}
+.auth-sub{font-size:12px;color:#475569;margin-bottom:20px;line-height:1.6}
+.field{margin-bottom:12px}
+.field-label{font-size:10px;color:#475569;letter-spacing:2px;margin-bottom:6px}
+input{background:#070d1a;border:1px solid #1e293b;border-radius:8px;color:#e2e8f0;font-family:'Share Tech Mono',monospace;font-size:13px;padding:11px 14px;width:100%;outline:none}
+.error-box{background:#1c0a0a;border:1px solid #f8717133;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:11px;color:#f87171;display:none}
+.btn{width:100%;border:none;border-radius:10px;font-family:'Orbitron',monospace;font-weight:700;letter-spacing:3px;padding:14px;cursor:pointer}
+.btn-orange{background:linear-gradient(135deg,#b45309 0%,#f59e0b 100%);color:#000;font-size:15px}
+.btn-scan{background:linear-gradient(135deg,#b45309 0%,#f59e0b 100%);color:#000;font-size:18px;border-radius:12px;margin-bottom:20px;box-shadow:0 0 30px #f59e0b33}
+.btn:disabled{background:#1e293b;color:#475569;cursor:not-allowed;box-shadow:none}
+.grade-tabs{display:flex;gap:6px;margin-bottom:16px;overflow-x:auto;padding-bottom:4px}
+.grade-tab{background:#070d1a;border:1px solid #1e293b;border-radius:10px;color:#475569;font-family:'Share Tech Mono',monospace;font-size:11px;font-weight:700;letter-spacing:1px;padding:8px 14px;cursor:pointer;white-space:nowrap}
+.listing-card{background:linear-gradient(135deg,#0a0f1e,#0f172a);border:1px solid #1e293b;border-radius:10px;padding:12px;display:flex;gap:12px;margin-bottom:8px}
+.listing-img{width:54px;height:74px;object-fit:contain;border-radius:4px;flex-shrink:0;background:#1e293b}
+.listing-body{flex:1;min-width:0}
+.tags{display:flex;gap:6px;margin-bottom:5px;flex-wrap:wrap}
+.tag{border-radius:4px;padding:2px 8px;font-size:10px;letter-spacing:1px;font-weight:700}
+.deal{background:#f59e0b22;color:#f59e0b;border:1px solid #f59e0b44}
+.fair{background:#38bdf822;color:#38bdf8;border:1px solid #38bdf844}
+.pass{background:#f8717122;color:#f87171;border:1px solid #f8717144}
+.auction{background:#a78bfa22;color:#a78bfa;border:1px solid #a78bfa44;font-size:9px}
+.buynow{background:#22c55e22;color:#22c55e;border:1px solid #22c55e44;font-size:9px}
+.title{font-size:12px;color:#cbd5e1;line-height:1.4;margin-bottom:6px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.ai-text{font-size:10px;color:#64748b;margin-bottom:6px;line-height:1.4}
+.footer{display:flex;justify-content:space-between;align-items:center}
+.price{font-family:'Orbitron',monospace;font-size:16px;font-weight:700;color:#f59e0b}
+.view-link{background:#1e293b;color:#94a3b8;border:1px solid #334155;border-radius:6px;padding:4px 10px;font-size:10px;text-decoration:none;letter-spacing:1px}
+.empty{text-align:center;padding:60px 20px;color:#1e293b;font-size:13px}
+.empty span{color:#334155}
+.loading{text-align:center;padding:30px;color:#334155;font-size:12px}
+.ai-loading{background:#0f172a;border:1px solid #1e293b;border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:11px;color:#64748b}
+.err{padding:16px;background:#1c0a0a;border:1px solid #f8717133;border-radius:8px;font-size:12px;color:#f87171}
+.deal-badge{background:#f59e0b22;border:1px solid #f59e0b44;border-radius:8px;padding:6px 12px;font-family:'Orbitron',monospace;font-size:14px;color:#f59e0b;font-weight:700;display:none}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spin{display:inline-block;animation:spin 1s linear infinite}
+</style>
+</head>
+<body>
+<div class="header">
+  <div style="max-width:700px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+    <div>
+      <div class="logo">CARD<span>SCAN</span></div>
+      <div class="subtitle">EBAY GRADED ROOKIE SCANNER</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px">
+      <div id="dealBadge" class="deal-badge">🔥 <span id="dealCount">0</span> DEALS</div>
+      <div id="lastScan" style="font-size:10px;color:#334155"></div>
+    </div>
+  </div>
+</div>
+<div class="content">
+  <div id="authPanel" class="auth-panel">
+    <div class="auth-title">CONNECT EBAY</div>
+    <div class="auth-sub">Paste your Production keys from developer.ebay.com → My Keys.</div>
+    <div class="field"><div class="field-label">CLIENT ID</div><input type="text" id="clientId" placeholder="BrianPel-Cardtrac-PRD-..."/></div>
+    <div class="field" style="margin-bottom:18px"><div class="field-label">CLIENT SECRET</div><input type="password" id="clientSecret" placeholder="PRD-..."/></div>
+    <div id="authError" class="error-box"></div>
+    <button class="btn btn-orange" id="connectBtn" onclick="handleAuth()">CONNECT & SCAN</button>
+  </div>
+  <div id="scannerPanel" style="display:none">
+    <button class="btn btn-scan" id="scanBtn" onclick="runFullScan()">⚡  RUN FULL SCAN</button>
+    <div class="grade-tabs" id="gradeTabs"></div>
+    <div id="listingsArea"><div class="empty">Hit RUN FULL SCAN to search eBay for<br/><span>PSA 10 · PSA 9 · BGS 9.5 · BGS 10 rookies</span></div></div>
+  </div>
+</div>
+<script>
+const PROXY='https://card-scanner-proxy.onrender.com';
+const TARGETS=[
+  {id:'psa10',label:'PSA 10',query:'PSA 10 rookie',grade:'PSA 10',color:'#f59e0b'},
+  {id:'psa9',label:'PSA 9',query:'PSA 9 rookie',grade:'PSA 9',color:'#38bdf8'},
+  {id:'bgs95',label:'BGS 9.5',query:'BGS 9.5 rookie',grade:'BGS 9.5',color:'#a78bfa'},
+  {id:'bgs10',label:'BGS 10',query:'BGS 10 rookie',grade:'BGS 10',color:'#4ade80'},
+];
+let token='',activeGrade='psa10',scanData={},scanning=false;
+
+async function handleAuth(){
+  const id=document.getElementById('clientId').value.trim();
+  const sec=document.getElementById('clientSecret').value.trim();
+  if(!id||!sec){showErr('Enter both fields');return;}
+  const btn=document.getElementById('connectBtn');
+  btn.disabled=true;btn.textContent='CONNECTING...';
+  hideErr();
+  try{
+    const r=await fetch(`${PROXY}/token?clientId=${encodeURIComponent(id)}&clientSecret=${encodeURIComponent(sec)}`);
+    const d=await r.json();
+    if(!d.access_token)throw new Error(d.error_description||'Invalid credentials');
+    token=d.access_token;
+    document.getElementById('authPanel').style.display='none';
+    document.getElementById('scannerPanel').style.display='block';
+    buildTabs();
+  }catch(e){showErr(e.message);btn.disabled=false;btn.textContent='CONNECT & SCAN';}
+}
+
+function showErr(m){const e=document.getElementById('authError');e.textContent='⚠️ '+m;e.style.display='block';}
+function hideErr(){document.getElementById('authError').style.display='none';}
+
+function buildTabs(){
+  const t=document.getElementById('gradeTabs');t.innerHTML='';
+  TARGETS.forEach(tg=>{
+    const b=document.createElement('button');
+    b.className='grade-tab';b.id='tab-'+tg.id;
+    b.onclick=()=>{activeGrade=tg.id;updateTabs();renderListings();};
+    t.appendChild(b);
+  });
+  updateTabs();
+}
+
+function updateTabs(){
+  TARGETS.forEach(tg=>{
+    const b=document.getElementById('tab-'+tg.id);if(!b)return;
+    const d=scanData[tg.id]||{};
+    const deals=Object.values(d.ratings||{}).filter(r=>r.tag==='DEAL').length;
+    const active=activeGrade===tg.id;
+    b.style.background=active?tg.color+'22':'#070d1a';
+    b.style.borderColor=active?tg.color:'#1e293b';
+    b.style.color=active?tg.color:'#475569';
+    b.innerHTML=tg.label+(deals>0?`<span style="margin-left:6px;background:#f59e0b;color:#000;border-radius:10px;padding:1px 6px;font-size:9px;font-weight:900">${deals}</span>`:'')+
+    (d.loading?'<span class="spin" style="margin-left:6px">⟳</span>':'')+
+    (!d.loading&&d.listings?.length>0?`<span style="margin-left:6px;color:#334155;font-size:9px">${d.listings.length}</span>`:'');
+  });
+  const total=Object.values(scanData).reduce((s,d)=>s+Object.values(d.ratings||{}).filter(r=>r.tag==='DEAL').length,0);
+  document.getElementById('dealCount').textContent=total;
+  document.getElementById('dealBadge').style.display=total>0?'block':'none';
+}
+
+function renderListings(){
+  const area=document.getElementById('listingsArea');
+  const d=scanData[activeGrade]||{};
+  const tg=TARGETS.find(t=>t.id===activeGrade);
+  if(!d.listings&&!d.loading){area.innerHTML='<div class="empty">Hit RUN FULL SCAN to search eBay for<br/><span>PSA 10 · PSA 9 · BGS 9.5 · BGS 10 rookies</span></div>';return;}
+  if(d.loading){area.innerHTML=`<div class="loading"><span class="spin">⟳</span><br/>Scanning eBay for ${tg.grade}...</div>`;return;}
+  if(d.error){area.innerHTML=`<div class="err">${d.error}</div>`;return;}
+  if(d.aiLoading){area.innerHTML=`<div class="ai-loading" style="border-left:3px solid ${tg.color}">● AI analyzing ${d.listings.length} listings...</div>`;return;}
+  if(!d.listings||!d.listings.length){area.innerHTML='<div class="empty"><span>No listings found.</span></div>';return;}
+  area.innerHTML=d.listings.map((item,i)=>{
+    const rating=d.ratings?.[i+1];
+    const price=parseFloat(item.price?.value||0).toFixed(2);
+    const isAuction=item.buyingOptions?.includes('AUCTION');
+    const img=item.image?.imageUrl;
+    const tagClass=rating?(rating.tag==='DEAL'?'deal':rating.tag==='PASS'?'pass':'fair'):'fair';
+    const tagLabel=rating?(rating.tag==='DEAL'?'🔥 DEAL':rating.tag==='PASS'?'⚠️ PASS':'✅ FAIR'):'';
+    return`<div class="listing-card">
+      ${img?`<img class="listing-img" src="${img}" alt=""/>`:''}
+      <div class="listing-body">
+        <div class="tags">
+          ${rating?`<span class="tag ${tagClass}">${tagLabel}</span>`:''}
+          <span class="tag ${isAuction?'auction':'buynow'}">${isAuction?'AUCTION':'BUY NOW'}</span>
+        </div>
+        <div class="title">${item.title||''}</div>
+        ${rating?.text?`<div class="ai-text">${rating.text}</div>`:''}
+        <div class="footer">
+          <div class="price">$${price}</div>
+          <a class="view-link" href="${item.itemWebUrl}" target="_blank">VIEW →</a>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function parseRatings(t){
+  const m={};
+  t.split('\n').filter(l=>l.match(/^\d+\./)).forEach(line=>{
+    const n=parseInt(line.match(/^(\d+)\./)?.[1]);if(!n)return;
+    m[n]={tag:/DEAL|🔥/.test(line)?'DEAL':/PASS|⚠️/.test(line)?'PASS':'FAIR',text:line.replace(/^\d+\.\s*/,'').replace(/\[.*?\]\s*/,'')};
+  });
+  return m;
+}
+
+async function runFullScan(){
+  if(!token||scanning)return;
+  scanning=true;
+  const btn=document.getElementById('scanBtn');
+  btn.disabled=true;btn.textContent='⟳  SCANNING...';
+  document.getElementById('lastScan').textContent='Last: '+new Date().toLocaleTimeString();
+  for(const tg of TARGETS){
+    scanData[tg.id]={loading:true,listings:[],ratings:{},aiLoading:false,error:null};
+    updateTabs();if(activeGrade===tg.id)renderListings();
+    try{
+      const r=await fetch(`${PROXY}/search?token=${encodeURIComponent(token)}&q=${encodeURIComponent(tg.query+' -reprint -lot -custom')}`);
+      if(!r.ok)throw new Error('Search failed');
+      const data=await r.json();
+      const listings=data.itemSummaries||[];
+      scanData[tg.id]={loading:false,listings,ratings:{},aiLoading:listings.length>0,error:null};
+      updateTabs();if(activeGrade===tg.id)renderListings();
+      if(listings.length>0){
+        const itemList=listings.slice(0,8).map((item,i)=>`${i+1}. [${item.buyingOptions?.includes('AUCTION')?'AUCTION':'BUY NOW'}] ${(item.title||'').slice(0,80)} — $${item.price?.value||'?'}`).join('\n');
+        const ar=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:`Expert sports card reseller analyzing eBay listings for ${tg.grade} rookies.\n\n${itemList}\n\nFor each number:\n1. [DEAL🔥/FAIR✅/PASS⚠️] One sentence with market value range.\n\nBe direct.`}]})});
+        const ad=await ar.json();
+        scanData[tg.id]={loading:false,listings,ratings:parseRatings(ad.content?.[0]?.text||''),aiLoading:false,error:null};
+        updateTabs();if(activeGrade===tg.id)renderListings();
+      }
+    }catch(e){
+      scanData[tg.id]={loading:false,listings:[],ratings:{},aiLoading:false,error:e.message};
+      updateTabs();if(activeGrade===tg.id)renderListings();
+    }
+  }
+  scanning=false;btn.disabled=false;btn.textContent='⚡  RUN FULL SCAN';
+}
+</script>
+</body>
+</html>
