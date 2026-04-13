@@ -47,6 +47,7 @@ input{background:#070d1a;border:1px solid #1e293b;border-radius:8px;color:#e2e8f
 .ai-loading{background:#0f172a;border:1px solid #1e293b;border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:11px;color:#64748b}
 .err{padding:16px;background:#1c0a0a;border:1px solid #f8717133;border-radius:8px;font-size:12px;color:#f87171}
 .deal-badge{background:#f59e0b22;border:1px solid #f59e0b44;border-radius:8px;padding:6px 12px;font-family:'Orbitron',monospace;font-size:14px;color:#f59e0b;font-weight:700;display:none}
+.logout{background:#1e293b;color:#64748b;border:1px solid #334155;border-radius:6px;padding:4px 10px;font-size:10px;font-family:'Share Tech Mono',monospace;cursor:pointer;letter-spacing:1px}
 @keyframes spin{to{transform:rotate(360deg)}}
 .spin{display:inline-block;animation:spin 1s linear infinite}
 </style>
@@ -61,13 +62,14 @@ input{background:#070d1a;border:1px solid #1e293b;border-radius:8px;color:#e2e8f
     <div style="display:flex;align-items:center;gap:12px">
       <div id="dealBadge" class="deal-badge">🔥 <span id="dealCount">0</span> DEALS</div>
       <div id="lastScan" style="font-size:10px;color:#334155"></div>
+      <button class="logout" id="logoutBtn" style="display:none" onclick="logout()">DISCONNECT</button>
     </div>
   </div>
 </div>
 <div class="content">
   <div id="authPanel" class="auth-panel">
     <div class="auth-title">CONNECT EBAY</div>
-    <div class="auth-sub">Paste your Production keys from developer.ebay.com → My Keys.</div>
+    <div class="auth-sub">Paste your Production keys from developer.ebay.com → My Keys. Your credentials are saved so you only need to do this once.</div>
     <div class="field"><div class="field-label">CLIENT ID</div><input type="text" id="clientId" placeholder="BrianPel-Cardtrac-PRD-..."/></div>
     <div class="field" style="margin-bottom:18px"><div class="field-label">CLIENT SECRET</div><input type="password" id="clientSecret" placeholder="PRD-..."/></div>
     <div id="authError" class="error-box"></div>
@@ -89,22 +91,50 @@ const TARGETS=[
 ];
 let token='',activeGrade='psa10',scanData={},scanning=false;
 
-async function handleAuth(){
+// Auto-login if saved credentials exist
+window.addEventListener('load',async()=>{
+  const savedId=localStorage.getItem('ebay_client_id');
+  const savedSecret=localStorage.getItem('ebay_client_secret');
+  if(savedId&&savedSecret){
+    document.getElementById('clientId').value=savedId;
+    document.getElementById('clientSecret').value=savedSecret;
+    await handleAuth(true);
+  }
+});
+
+async function handleAuth(silent=false){
   const id=document.getElementById('clientId').value.trim();
   const sec=document.getElementById('clientSecret').value.trim();
   if(!id||!sec){showErr('Enter both fields');return;}
   const btn=document.getElementById('connectBtn');
-  btn.disabled=true;btn.textContent='CONNECTING...';
+  if(!silent){btn.disabled=true;btn.textContent='CONNECTING...';}
   hideErr();
   try{
     const r=await fetch(`${PROXY}/token?clientId=${encodeURIComponent(id)}&clientSecret=${encodeURIComponent(sec)}`);
     const d=await r.json();
     if(!d.access_token)throw new Error(d.error_description||'Invalid credentials');
     token=d.access_token;
+    localStorage.setItem('ebay_client_id',id);
+    localStorage.setItem('ebay_client_secret',sec);
     document.getElementById('authPanel').style.display='none';
     document.getElementById('scannerPanel').style.display='block';
+    document.getElementById('logoutBtn').style.display='block';
     buildTabs();
-  }catch(e){showErr(e.message);btn.disabled=false;btn.textContent='CONNECT & SCAN';}
+  }catch(e){
+    showErr(e.message);
+    if(!silent){btn.disabled=false;btn.textContent='CONNECT & SCAN';}
+  }
+}
+
+function logout(){
+  localStorage.removeItem('ebay_client_id');
+  localStorage.removeItem('ebay_client_secret');
+  token='';
+  document.getElementById('authPanel').style.display='block';
+  document.getElementById('scannerPanel').style.display='none';
+  document.getElementById('logoutBtn').style.display='none';
+  document.getElementById('clientId').value='';
+  document.getElementById('clientSecret').value='';
 }
 
 function showErr(m){const e=document.getElementById('authError');e.textContent='⚠️ '+m;e.style.display='block';}
@@ -184,6 +214,16 @@ function parseRatings(t){
 
 async function runFullScan(){
   if(!token||scanning)return;
+  // Re-fetch token first to make sure it's fresh
+  const savedId=localStorage.getItem('ebay_client_id');
+  const savedSecret=localStorage.getItem('ebay_client_secret');
+  if(savedId&&savedSecret){
+    try{
+      const r=await fetch(`${PROXY}/token?clientId=${encodeURIComponent(savedId)}&clientSecret=${encodeURIComponent(savedSecret)}`);
+      const d=await r.json();
+      if(d.access_token)token=d.access_token;
+    }catch(e){}
+  }
   scanning=true;
   const btn=document.getElementById('scanBtn');
   btn.disabled=true;btn.textContent='⟳  SCANNING...';
