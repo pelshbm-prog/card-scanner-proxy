@@ -108,96 +108,151 @@ var GRADES=[
 {id:'auto95',label:'AUTO 9.5+',grade:'AUTO',color:'#4ade80'}
 ];
 
-var MARKET_VALUES={
-psa10:[
-{keywords:['mahomes','donruss','2017'],low:800,high:1100},
-{keywords:['mahomes','prizm','2017'],low:2500,high:3500},
-{keywords:['mahomes','contenders','2017'],low:600,high:900},
-{keywords:['mahomes','topps','2017'],low:300,high:500},
-{keywords:['mahomes','score','2017'],low:200,high:350},
-{keywords:['brady','bowman','2000'],low:10000,high:15000},
-{keywords:['brady','topps','2000'],low:800,high:1200},
-{keywords:['brady','playoff','contenders'],low:3000,high:5000},
-{keywords:['brady','upper deck','2000'],low:500,high:800},
-{keywords:['burrow','prizm','2020'],low:200,high:350},
-{keywords:['burrow','donruss','2020'],low:100,high:180},
-{keywords:['burrow','topps','2020'],low:80,high:140},
-{keywords:['herbert','prizm','2020'],low:150,high:250},
-{keywords:['herbert','donruss','2020'],low:80,high:140},
-{keywords:['wembanyama','prizm','2023'],low:300,high:500},
-{keywords:['wembanyama','topps','2023'],low:150,high:280},
-{keywords:['luka','prizm','2018'],low:500,high:800},
-{keywords:['luka','donruss','2018'],low:200,high:350},
-{keywords:['judge','topps','2017'],low:200,high:350},
-{keywords:['judge','chrome','2017'],low:300,high:500},
-{keywords:['shohei','topps','2018'],low:300,high:500},
-{keywords:['jeanty','donruss','2025'],low:30,high:60},
-{keywords:['jeanty','prizm','2025'],low:50,high:100},
-{keywords:['flagg','2025'],low:100,high:200},
-{keywords:['lamar','jackson','prizm','2018'],low:300,high:500},
-{keywords:['josh','allen','prizm','2018'],low:400,high:650},
-{keywords:['josh','allen','donruss','2018'],low:200,high:350},
-{keywords:['tatum','prizm','2017'],low:200,high:350},
-{keywords:['giannis','topps','2013'],low:300,high:500},
-{keywords:['sga','prizm','2018'],low:150,high:280},
-{keywords:['curry','topps','2009'],low:400,high:600},
-{keywords:['curry','prizm','2012'],low:800,high:1200},
-{keywords:['curry','chrome','2009'],low:1500,high:2500}
-],
-psa9:[
-{keywords:['mahomes','donruss','2017'],low:300,high:500},
-{keywords:['mahomes','prizm','2017'],low:800,high:1200},
-{keywords:['mahomes','contenders','2017'],low:200,high:350},
-{keywords:['brady','bowman','2000'],low:3000,high:5000},
-{keywords:['brady','topps','2000'],low:250,high:400},
-{keywords:['burrow','prizm','2020'],low:80,high:140},
-{keywords:['burrow','donruss','2020'],low:40,high:70},
-{keywords:['herbert','prizm','2020'],low:60,high:100},
-{keywords:['wembanyama','prizm','2023'],low:100,high:180},
-{keywords:['luka','prizm','2018'],low:180,high:300},
-{keywords:['judge','topps','2017'],low:80,high:140},
-{keywords:['shohei','topps','2018'],low:100,high:180},
-{keywords:['josh','allen','prizm','2018'],low:150,high:250},
-{keywords:['lamar','jackson','prizm','2018'],low:120,high:200},
-{keywords:['tatum','prizm','2017'],low:80,high:140},
-{keywords:['curry','topps','2009'],low:150,high:250},
-{keywords:['curry','prizm','2012'],low:300,high:500}
-],
-bgs95:[
-{keywords:['mahomes','donruss','2017'],low:500,high:750},
-{keywords:['mahomes','prizm','2017'],low:1500,high:2200},
-{keywords:['brady','bowman','2000'],low:6000,high:9000},
-{keywords:['burrow','prizm','2020'],low:120,high:200},
-{keywords:['wembanyama','prizm','2023'],low:180,high:300},
-{keywords:['luka','prizm','2018'],low:300,high:500},
-{keywords:['josh','allen','prizm','2018'],low:250,high:400},
-{keywords:['curry','topps','2009'],low:250,high:400}
-],
-auto95:[
-{keywords:['mahomes','auto','2017'],low:3000,high:6000},
-{keywords:['brady','auto'],low:1500,high:3500},
-{keywords:['burrow','auto','2020'],low:300,high:600},
-{keywords:['herbert','auto','2020'],low:200,high:400},
-{keywords:['wembanyama','auto','2023'],low:500,high:1000},
-{keywords:['jeanty','auto','2025'],low:100,high:250},
-{keywords:['flagg','auto','2025'],low:200,high:500},
-{keywords:['luka','auto','2018'],low:800,high:1500},
-{keywords:['josh','allen','auto'],low:500,high:1000},
-{keywords:['lamar','jackson','auto'],low:400,high:800},
-{keywords:['tatum','auto'],low:300,high:600},
-{keywords:['curry','auto'],low:500,high:1000}
-]
-};
+// Each entry: keywords (ALL must match), grade, low, high
+// Grade-specific so PSA 9 and PSA 10 values are separate
+var COMPS=[
+// ── MAHOMES PSA 10 ──
+{p:'mahomes',s:'donruss',g:'psa10',low:800,high:1100},
+{p:'mahomes',s:'prizm',g:'psa10',low:2500,high:3500},
+{p:'mahomes',s:'contenders',g:'psa10',low:600,high:900},
+{p:'mahomes',s:'topps chrome',g:'psa10',low:400,high:650},
+{p:'mahomes',s:'topps',g:'psa10',low:250,high:400},
+{p:'mahomes',s:'score',g:'psa10',low:200,high:320},
+{p:'mahomes',s:'absolute',g:'psa10',low:300,high:500},
+{p:'mahomes',s:'select',g:'psa10',low:500,high:800},
+{p:'mahomes',s:'mosaic',g:'psa10',low:300,high:500},
+{p:'mahomes',s:'certified',g:'psa10',low:400,high:650},
+{p:'mahomes',s:'spectra',g:'psa10',low:800,high:1400},
+{p:'mahomes',s:'national treasures',g:'psa10',low:5000,high:9000},
+{p:'mahomes',s:'chronicles',g:'psa10',low:200,high:350},
+{p:'mahomes',s:'optic',g:'psa10',low:500,high:800},
+{p:'mahomes',s:'illusions',g:'psa10',low:200,high:350},
+{p:'mahomes',s:'phoenix',g:'psa10',low:300,high:500},
+{p:'mahomes',s:'prestige',g:'psa10',low:150,high:280},
+{p:'mahomes',s:'panini',g:'psa10',low:150,high:300},
+// ── MAHOMES PSA 9 ──
+{p:'mahomes',s:'donruss',g:'psa9',low:250,high:450},
+{p:'mahomes',s:'prizm',g:'psa9',low:700,high:1100},
+{p:'mahomes',s:'contenders',g:'psa9',low:200,high:350},
+{p:'mahomes',s:'topps chrome',g:'psa9',low:150,high:250},
+{p:'mahomes',s:'topps',g:'psa9',low:100,high:180},
+{p:'mahomes',s:'score',g:'psa9',low:80,high:140},
+{p:'mahomes',s:'select',g:'psa9',low:180,high:300},
+{p:'mahomes',s:'mosaic',g:'psa9',low:100,high:180},
+{p:'mahomes',s:'optic',g:'psa9',low:180,high:300},
+{p:'mahomes',s:'absolute',g:'psa9',low:100,high:180},
+{p:'mahomes',s:'spectra',g:'psa9',low:300,high:550},
+{p:'mahomes',s:'national treasures',g:'psa9',low:1500,high:3000},
+{p:'mahomes',s:'panini',g:'psa9',low:60,high:120},
+// ── MAHOMES BGS 9.5 ──
+{p:'mahomes',s:'donruss',g:'bgs95',low:450,high:700},
+{p:'mahomes',s:'prizm',g:'bgs95',low:1400,high:2200},
+{p:'mahomes',s:'contenders',g:'bgs95',low:350,high:600},
+{p:'mahomes',s:'topps',g:'bgs95',low:150,high:280},
+{p:'mahomes',s:'select',g:'bgs95',low:300,high:550},
+{p:'mahomes',s:'optic',g:'bgs95',low:300,high:550},
+{p:'mahomes',s:'spectra',g:'bgs95',low:500,high:900},
+// ── TOM BRADY PSA 10 ──
+{p:'brady',s:'bowman',g:'psa10',low:10000,high:15000},
+{p:'brady',s:'topps',g:'psa10',low:800,high:1300},
+{p:'brady',s:'topps chrome',g:'psa10',low:3000,high:5000},
+{p:'brady',s:'playoff contenders',g:'psa10',low:3500,high:6000},
+{p:'brady',s:'contenders',g:'psa10',low:3500,high:6000},
+{p:'brady',s:'upper deck',g:'psa10',low:500,high:900},
+{p:'brady',s:'fleer tradition',g:'psa10',low:400,high:700},
+{p:'brady',s:'fleer',g:'psa10',low:400,high:700},
+{p:'brady',s:'score',g:'psa10',low:300,high:550},
+{p:'brady',s:'pacific',g:'psa10',low:300,high:500},
+{p:'brady',s:'leaf',g:'psa10',low:200,high:400},
+{p:'brady',s:'sp authentic',g:'psa10',low:800,high:1400},
+{p:'brady',s:'collector',g:'psa10',low:300,high:550},
+{p:'brady',s:'donruss',g:'psa10',low:400,high:700},
+// ── TOM BRADY PSA 9 ──
+{p:'brady',s:'bowman',g:'psa9',low:3000,high:5500},
+{p:'brady',s:'topps',g:'psa9',low:250,high:450},
+{p:'brady',s:'topps chrome',g:'psa9',low:1000,high:1800},
+{p:'brady',s:'playoff contenders',g:'psa9',low:1200,high:2200},
+{p:'brady',s:'contenders',g:'psa9',low:1200,high:2200},
+{p:'brady',s:'upper deck',g:'psa9',low:150,high:300},
+{p:'brady',s:'fleer',g:'psa9',low:150,high:280},
+{p:'brady',s:'score',g:'psa9',low:100,high:200},
+{p:'brady',s:'sp authentic',g:'psa9',low:300,high:550},
+// ── TOM BRADY BGS 9.5 ──
+{p:'brady',s:'bowman',g:'bgs95',low:6000,high:10000},
+{p:'brady',s:'topps chrome',g:'bgs95',low:2000,high:3500},
+{p:'brady',s:'contenders',g:'bgs95',low:2000,high:3500},
+{p:'brady',s:'topps',g:'bgs95',low:500,high:900},
+// ── OTHER PLAYERS PSA 10 ──
+{p:'burrow',s:'prizm',g:'psa10',low:200,high:350},
+{p:'burrow',s:'donruss',g:'psa10',low:100,high:180},
+{p:'burrow',s:'topps',g:'psa10',low:80,high:140},
+{p:'burrow',s:'select',g:'psa10',low:150,high:280},
+{p:'burrow',s:'mosaic',g:'psa10',low:100,high:180},
+{p:'herbert',s:'prizm',g:'psa10',low:150,high:260},
+{p:'herbert',s:'donruss',g:'psa10',low:80,high:140},
+{p:'wembanyama',s:'prizm',g:'psa10',low:300,high:500},
+{p:'wembanyama',s:'topps',g:'psa10',low:150,high:280},
+{p:'wembanyama',s:'donruss',g:'psa10',low:120,high:220},
+{p:'luka',s:'prizm',g:'psa10',low:500,high:800},
+{p:'luka',s:'donruss',g:'psa10',low:200,high:350},
+{p:'josh allen',s:'prizm',g:'psa10',low:400,high:650},
+{p:'josh allen',s:'donruss',g:'psa10',low:200,high:350},
+{p:'lamar',s:'prizm',g:'psa10',low:300,high:500},
+{p:'tatum',s:'prizm',g:'psa10',low:200,high:350},
+{p:'curry',s:'topps',g:'psa10',low:400,high:650},
+{p:'curry',s:'prizm',g:'psa10',low:800,high:1300},
+{p:'judge',s:'topps',g:'psa10',low:200,high:350},
+{p:'shohei',s:'topps',g:'psa10',low:300,high:500},
+{p:'jeanty',s:'donruss',g:'psa10',low:30,high:70},
+{p:'jeanty',s:'prizm',g:'psa10',low:50,high:110},
+{p:'flagg',s:'',g:'psa10',low:100,high:220},
+{p:'sga',s:'prizm',g:'psa10',low:150,high:280},
+{p:'giannis',s:'topps',g:'psa10',low:300,high:500},
+// ── OTHER PLAYERS PSA 9 ──
+{p:'burrow',s:'prizm',g:'psa9',low:80,high:140},
+{p:'burrow',s:'donruss',g:'psa9',low:40,high:75},
+{p:'herbert',s:'prizm',g:'psa9',low:60,high:110},
+{p:'wembanyama',s:'prizm',g:'psa9',low:100,high:180},
+{p:'luka',s:'prizm',g:'psa9',low:180,high:320},
+{p:'josh allen',s:'prizm',g:'psa9',low:150,high:260},
+{p:'lamar',s:'prizm',g:'psa9',low:120,high:210},
+{p:'tatum',s:'prizm',g:'psa9',low:80,high:140},
+{p:'curry',s:'topps',g:'psa9',low:150,high:260},
+{p:'judge',s:'topps',g:'psa9',low:80,high:140},
+{p:'shohei',s:'topps',g:'psa9',low:100,high:180},
+// ── AUTOS ──
+{p:'mahomes',s:'auto',g:'auto95',low:3000,high:6000},
+{p:'brady',s:'auto',g:'auto95',low:1500,high:3500},
+{p:'burrow',s:'auto',g:'auto95',low:300,high:600},
+{p:'herbert',s:'auto',g:'auto95',low:200,high:400},
+{p:'wembanyama',s:'auto',g:'auto95',low:500,high:1000},
+{p:'jeanty',s:'auto',g:'auto95',low:100,high:250},
+{p:'flagg',s:'auto',g:'auto95',low:200,high:500},
+{p:'luka',s:'auto',g:'auto95',low:800,high:1500},
+{p:'josh allen',s:'auto',g:'auto95',low:500,high:1000},
+{p:'lamar',s:'auto',g:'auto95',low:400,high:800},
+{p:'tatum',s:'auto',g:'auto95',low:300,high:600},
+{p:'curry',s:'auto',g:'auto95',low:500,high:1000}
+];
 
 function getMarketValue(title,gradeId){
 var t=title.toLowerCase();
-var values=MARKET_VALUES[gradeId]||MARKET_VALUES['psa10'];
-for(var i=0;i<values.length;i++){
-var entry=values[i];
-var allMatch=entry.keywords.every(function(kw){return t.indexOf(kw)>=0;});
-if(allMatch)return{low:entry.low,high:entry.high,mid:(entry.low+entry.high)/2};
+// Find best match — most specific (most keywords matched)
+var best=null,bestScore=0;
+for(var i=0;i<COMPS.length;i++){
+var c=COMPS[i];
+if(c.g!==gradeId)continue;
+var score=0;
+if(t.indexOf(c.p)<0)continue; // player must match
+score++;
+if(c.s&&c.s.length>0){
+if(t.indexOf(c.s)<0)continue; // set must match if specified
+score+=c.s.split(' ').length; // longer set match = higher score
 }
-return null;
+if(score>bestScore){bestScore=score;best=c;}
+}
+if(!best)return null;
+return{low:best.low,high:best.high,mid:(best.low+best.high)/2};
 }
 
 var clientId='',clientSecret='',activeGrade='psa10',scanData={},scanning=false,trendingPlayers=[];
@@ -240,11 +295,16 @@ fetch(PROXY+'/trending?clientId='+encodeURIComponent(clientId)+'&clientSecret='+
 .then(function(r){return r.json();})
 .then(function(d){
 if(d.players){
+// Remove LeBron and Curry from trending display, keep anchors
 var filtered=d.players.filter(function(p){
-return ANCHORS.indexOf(p)>=0||ANCHORS.indexOf(p)<0;
+var pl=p.toLowerCase();
+return pl.indexOf('lebron')<0&&pl.indexOf('curry')<0;
 });
-trendingPlayers=d.players;
-renderTrending(d.players);
+// Make sure anchors are first
+var final=ANCHORS.slice();
+filtered.forEach(function(p){if(ANCHORS.indexOf(p)<0)final.push(p);});
+trendingPlayers=final;
+renderTrending(final);
 }
 })
 .catch(function(){trendingPlayers=ANCHORS;renderTrending(ANCHORS);});
@@ -312,14 +372,14 @@ function rateCard(item,gradeId){
 var mv=getMarketValue(item.title||'',gradeId);
 var bid=getCurrentBid(item);
 if(!mv)return null;
-if(!bid)return null; // skip no-bid cards
+if(!bid)return null;
 var pct=Math.round(((bid-mv.mid)/mv.mid)*100);
-if(pct>-20)return null; // only show 20%+ under value
+if(pct>-20)return null;
 var isFire=pct<=-40;
 var text='';
 if(pct<=-40)text='🚨 MASSIVE undervalue — '+Math.abs(pct)+'% below market. Bid immediately.';
-else if(pct<=-30)text='🔥 Significantly underpriced — '+Math.abs(pct)+'% below market. Strong buy.';
-else text='Below market by '+Math.abs(pct)+'%. Good flip opportunity.';
+else if(pct<=-30)text='🔥 '+Math.abs(pct)+'% below market. Strong flip opportunity.';
+else text=''+Math.abs(pct)+'% below market. Worth bidding.';
 return{tag:'DEAL',isFire:isFire,mv:mv,pct:pct,text:text};
 }
 
@@ -391,14 +451,12 @@ btn.disabled=true;btn.textContent='⟳ SCANNING...';
 document.getElementById('lastScan').textContent='Last: '+new Date().toLocaleTimeString();
 var players=trendingPlayers.length>0?trendingPlayers:ANCHORS;
 var gi=0;
-
 function nextGrade(){
 if(gi>=GRADES.length){scanning=false;btn.disabled=false;btn.textContent='⚡ RUN FULL SCAN';return;}
 var tg=GRADES[gi];gi++;
 scanData[tg.id]={loading:true,deals:[],error:null,status:'Scanning for '+tg.label+' deals...'};
 updateTabs();if(activeGrade===tg.id)renderListings();
 var all=[],done=0;
-
 players.forEach(function(player){
 var q,gradeParam;
 if(tg.id==='auto95'){
