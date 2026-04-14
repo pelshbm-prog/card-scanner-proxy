@@ -144,4 +144,158 @@ function renderTrending(players){
 var bar=document.getElementById('trendingBar');
 bar.innerHTML=players.map(function(p){
 var isAnchor=ANCHORS.indexOf(p)>=0;
-return '<span class="trend-pill'+(isAnchor?' anchor':'')+'">'+(isAnchor?'​​​​​​​​​​​​​​​​
+return '<span class="trend-pill'+(isAnchor?' anchor':'')+'">'+(isAnchor?'⭐ ':'')+p+'</span>';
+}).join('');
+}
+
+function buildSearchQueries(grade){
+var players=trendingPlayers.length>0?trendingPlayers:ANCHORS;
+return players.map(function(p){return p+' '+grade+' rookie';});
+}
+
+function buildTabs(){
+var t=document.getElementById('gradeTabs');t.innerHTML='';
+GRADES.forEach(function(tg){
+var b=document.createElement('button');
+b.className='grade-tab';b.id='tab-'+tg.id;
+b.onclick=function(){activeGrade=tg.id;updateTabs();renderListings();};
+t.appendChild(b);
+});
+updateTabs();
+}
+
+function updateTabs(){
+GRADES.forEach(function(tg){
+var b=document.getElementById('tab-'+tg.id);if(!b)return;
+var d=scanData[tg.id]||{};
+var deals=Object.values(d.ratings||{}).filter(function(r){return r.tag==='DEAL';}).length;
+var active=activeGrade===tg.id;
+b.style.background=active?tg.color+'22':'#070d1a';
+b.style.borderColor=active?tg.color:'#1e293b';
+b.style.color=active?tg.color:'#475569';
+b.innerHTML=tg.label+(deals>0?'<span style="margin-left:6px;background:#f59e0b;color:#000;border-radius:10px;padding:1px 6px;font-size:9px;font-weight:900">'+deals+'</span>':'')+(d.loading?'<span class="spin" style="margin-left:6px">⟳</span>':'');
+});
+var total=Object.values(scanData).reduce(function(s,d){return s+Object.values(d.ratings||{}).filter(function(r){return r.tag==='DEAL';}).length;},0);
+document.getElementById('dealCount').textContent=total;
+document.getElementById('dealBadge').style.display=total>0?'block':'none';
+}
+
+function formatPrice(item){
+var price=item.currentBidPrice||item.price;
+if(!price)return'$—';
+return'$'+parseFloat(price.value).toFixed(2);
+}
+
+function formatEndTime(item){
+if(!item.itemEndDate)return'';
+var end=new Date(item.itemEndDate);
+var mins=Math.round((end-Date.now())/60000);
+if(mins<1)return'< 1 min left';
+if(mins<60)return mins+'m left';
+return Math.round(mins/60)+'h left';
+}
+
+function renderListings(){
+var area=document.getElementById('listingsArea');
+var d=scanData[activeGrade]||{};
+var tg=GRADES.find(function(t){return t.id===activeGrade;});
+if(!d.listings&&!d.loading){area.innerHTML='<div class="empty">Hit RUN FULL SCAN<br/><span>Auctions ending in 60 min · PSA 10 · PSA 9 · BGS 9.5 · BGS 10</span></div>';return;}
+if(d.loading){area.innerHTML='<div class="loading"><span class="spin">⟳</span><br/>'+(d.status||'Scanning...')+'</div>';return;}
+if(d.error){area.innerHTML='<div class="err">'+d.error+'</div>';return;}
+if(d.aiLoading){area.innerHTML='<div class="ai-loading" style="border-left:3px solid '+tg.color+'">● AI analyzing '+d.listings.length+' listings...</div>';return;}
+if(!d.listings||!d.listings.length){area.innerHTML='<div class="empty"><span>No auctions ending soon for this grade.<br/>Try again in a few minutes.</span></div>';return;}
+area.innerHTML=d.listings.map(function(item,i){
+var rating=d.ratings?d.ratings[i+1]:null;
+var priceStr=formatPrice(item);
+var timeLeft=formatEndTime(item);
+var img=item.image?item.image.imageUrl:'';
+var tagClass=rating?(rating.tag==='DEAL'?'deal':rating.tag==='PASS'?'pass':'fair'):'fair';
+var tagLabel=rating?(rating.tag==='DEAL'?'🔥 DEAL':rating.tag==='PASS'?'⚠️ PASS':'✅ FAIR'):'';
+return '<div class="listing-card">'+(img?'<img class="listing-img" src="'+img+'" alt=""/>':'')+'<div class="listing-body"><div class="tags">'+(rating?'<span class="tag '+tagClass+'">'+tagLabel+'</span>':'')+'<span class="tag auction">AUCTION</span>'+(timeLeft?'<span class="tag ending">⏱ '+timeLeft+'</span>':'')+'</div><div class="title">'+(item.title||'')+'</div>'+(rating&&rating.text?'<div class="ai-text">'+rating.text+'</div>':'')+'<div class="footer"><div><div class="price">'+priceStr+'</div><div class="price-sub">current bid</div></div><a class="view-link" href="'+item.itemWebUrl+'" target="_blank">BID →</a></div></div></div>';
+}).join('');
+}
+
+function parseRatings(t){
+var m={};
+t.split('\n').filter(function(l){return l.match(/^\d+\./);}).forEach(function(line){
+var n=parseInt((line.match(/^(\d+)\./)||[])[1]);if(!n)return;
+m[n]={tag:/DEAL|🔥/.test(line)?'DEAL':/PASS|⚠️/.test(line)?'PASS':'FAIR',text:line.replace(/^\d+\.\s*/,'').replace(/\[.*?\]\s*/,'')};
+});
+return m;
+}
+
+function fetchWithRetry(url,retries,delay){
+retries=retries||4;delay=delay||5000;
+return new Promise(function(resolve,reject){
+function attempt(n){
+var controller=new AbortController();
+var timeout=setTimeout(function(){controller.abort();},55000);
+fetch(url,{signal:controller.signal})
+.then(function(r){clearTimeout(timeout);return r.json();})
+.then(resolve)
+.catch(function(e){clearTimeout(timeout);if(n<=1){reject(e);}else{setTimeout(function(){attempt(n-1);},delay);}});
+}
+attempt(retries);
+});
+}
+
+function runFullScan(){
+if(!clientId||!clientSecret||scanning)return;
+scanning=true;
+var btn=document.getElementById('scanBtn');
+btn.disabled=true;btn.textContent='⟳ SCANNING...';
+document.getElementById('lastScan').textContent='Last: '+new Date().toLocaleTimeString();
+var players=trendingPlayers.length>0?trendingPlayers:ANCHORS;
+var i=0;
+function nextGrade(){
+if(i>=GRADES.length){scanning=false;btn.disabled=false;btn.textContent='⚡ RUN FULL SCAN';return;}
+var tg=GRADES[i];i++;
+scanData[tg.id]={loading:true,listings:[],ratings:{},aiLoading:false,error:null,status:'Scanning for '+tg.grade+' auctions ending soon...'};
+updateTabs();if(activeGrade===tg.id)renderListings();
+var allListings=[];
+var playersDone=0;
+players.forEach(function(player){
+var q=player+' '+tg.grade+' rookie -reprint -lot -custom';
+var url=PROXY+'/scan?clientId='+encodeURIComponent(clientId)+'&clientSecret='+encodeURIComponent(clientSecret)+'&q='+encodeURIComponent(q);
+fetchWithRetry(url,2,3000).then(function(data){
+var items=data.itemSummaries||[];
+allListings=allListings.concat(items);
+}).catch(function(){}).finally(function(){
+playersDone++;
+if(playersDone>=players.length){
+var seen={};
+var unique=allListings.filter(function(item){if(seen[item.itemId])return false;seen[item.itemId]=true;return true;});
+unique.sort(function(a,b){
+var ta=a.itemEndDate?new Date(a.itemEndDate).getTime():9999999999999;
+var tb=b.itemEndDate?new Date(b.itemEndDate).getTime():9999999999999;
+return ta-tb;
+});
+var listings=unique.slice(0,20);
+scanData[tg.id]={loading:false,listings:listings,ratings:{},aiLoading:listings.length>0,error:null};
+updateTabs();if(activeGrade===tg.id)renderListings();
+if(listings.length>0){
+var itemList=listings.slice(0,8).map(function(item,idx){
+var price=formatPrice(item);
+var time=formatEndTime(item);
+return (idx+1)+'. '+price+' · '+(time||'ending soon')+' · '+(item.title||'').slice(0,70);
+}).join('\n');
+fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:'Expert sports card reseller. These are live eBay auctions ending within 60 minutes for '+tg.grade+' rookie cards.\n\n'+itemList+'\n\nFor each number, should I bid? Format:\n1. [DEAL🔥/FAIR✅/PASS⚠️] One sentence — estimated market value and whether current bid is under/at/over value.\n\nBe direct. I need to decide fast.'}]})})
+.then(function(r){return r.json();})
+.then(function(ad){
+scanData[tg.id]={loading:false,listings:listings,ratings:parseRatings((ad.content&&ad.content[0])?ad.content[0].text:''),aiLoading:false,error:null};
+updateTabs();if(activeGrade===tg.id)renderListings();nextGrade();
+}).catch(function(){
+scanData[tg.id].aiLoading=false;updateTabs();if(activeGrade===tg.id)renderListings();nextGrade();
+});
+}else{nextGrade();}
+}
+});
+});
+}
+nextGrade();
+}
+
+window.onload=init;
+</script>
+</body>
+</html>
