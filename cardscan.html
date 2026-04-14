@@ -69,7 +69,7 @@ input{background:#070d1a;border:1px solid #1e293b;border-radius:8px;color:#e2e8f
 <div class="content">
   <div id="authPanel" class="auth-panel">
     <div class="auth-title">CONNECT EBAY</div>
-    <div class="auth-sub">Paste your Production keys from developer.ebay.com → My Keys. Your credentials are saved so you only need to do this once.</div>
+    <div class="auth-sub">Paste your Production keys from developer.ebay.com → My Keys.</div>
     <div class="field"><div class="field-label">CLIENT ID</div><input type="text" id="clientId" placeholder="BrianPel-Cardtrac-PRD-..."/></div>
     <div class="field" style="margin-bottom:18px"><div class="field-label">CLIENT SECRET</div><input type="password" id="clientSecret" placeholder="PRD-..."/></div>
     <div id="authError" class="error-box"></div>
@@ -89,47 +89,38 @@ const TARGETS=[
   {id:'bgs95',label:'BGS 9.5',query:'BGS 9.5 rookie',grade:'BGS 9.5',color:'#a78bfa'},
   {id:'bgs10',label:'BGS 10',query:'BGS 10 rookie',grade:'BGS 10',color:'#4ade80'},
 ];
-let token='',activeGrade='psa10',scanData={},scanning=false;
+let clientId='',clientSecret='',activeGrade='psa10',scanData={},scanning=false;
 
-// Auto-login if saved credentials exist
-window.addEventListener('load',async()=>{
-  const savedId=localStorage.getItem('ebay_client_id');
-  const savedSecret=localStorage.getItem('ebay_client_secret');
-  if(savedId&&savedSecret){
-    document.getElementById('clientId').value=savedId;
-    document.getElementById('clientSecret').value=savedSecret;
-    await handleAuth(true);
+window.addEventListener('load',()=>{
+  const sid=localStorage.getItem('ebay_client_id');
+  const ssec=localStorage.getItem('ebay_client_secret');
+  if(sid&&ssec){
+    clientId=sid;clientSecret=ssec;
+    showScanner();
   }
 });
 
-async function handleAuth(silent=false){
+function handleAuth(){
   const id=document.getElementById('clientId').value.trim();
   const sec=document.getElementById('clientSecret').value.trim();
   if(!id||!sec){showErr('Enter both fields');return;}
-  const btn=document.getElementById('connectBtn');
-  if(!silent){btn.disabled=true;btn.textContent='CONNECTING...';}
-  hideErr();
-  try{
-    const r=await fetch(`${PROXY}/token?clientId=${encodeURIComponent(id)}&clientSecret=${encodeURIComponent(sec)}`);
-    const d=await r.json();
-    if(!d.access_token)throw new Error(d.error_description||'Invalid credentials');
-    token=d.access_token;
-    localStorage.setItem('ebay_client_id',id);
-    localStorage.setItem('ebay_client_secret',sec);
-    document.getElementById('authPanel').style.display='none';
-    document.getElementById('scannerPanel').style.display='block';
-    document.getElementById('logoutBtn').style.display='block';
-    buildTabs();
-  }catch(e){
-    showErr(e.message);
-    if(!silent){btn.disabled=false;btn.textContent='CONNECT & SCAN';}
-  }
+  clientId=id;clientSecret=sec;
+  localStorage.setItem('ebay_client_id',id);
+  localStorage.setItem('ebay_client_secret',sec);
+  showScanner();
+}
+
+function showScanner(){
+  document.getElementById('authPanel').style.display='none';
+  document.getElementById('scannerPanel').style.display='block';
+  document.getElementById('logoutBtn').style.display='block';
+  buildTabs();
 }
 
 function logout(){
   localStorage.removeItem('ebay_client_id');
   localStorage.removeItem('ebay_client_secret');
-  token='';
+  clientId='';clientSecret='';
   document.getElementById('authPanel').style.display='block';
   document.getElementById('scannerPanel').style.display='none';
   document.getElementById('logoutBtn').style.display='none';
@@ -213,28 +204,21 @@ function parseRatings(t){
 }
 
 async function runFullScan(){
-  if(!token||scanning)return;
-  // Re-fetch token first to make sure it's fresh
-  const savedId=localStorage.getItem('ebay_client_id');
-  const savedSecret=localStorage.getItem('ebay_client_secret');
-  if(savedId&&savedSecret){
-    try{
-      const r=await fetch(`${PROXY}/token?clientId=${encodeURIComponent(savedId)}&clientSecret=${encodeURIComponent(savedSecret)}`);
-      const d=await r.json();
-      if(d.access_token)token=d.access_token;
-    }catch(e){}
-  }
+  if(!clientId||!clientSecret||scanning)return;
   scanning=true;
   const btn=document.getElementById('scanBtn');
   btn.disabled=true;btn.textContent='⟳  SCANNING...';
   document.getElementById('lastScan').textContent='Last: '+new Date().toLocaleTimeString();
+
   for(const tg of TARGETS){
     scanData[tg.id]={loading:true,listings:[],ratings:{},aiLoading:false,error:null};
     updateTabs();if(activeGrade===tg.id)renderListings();
     try{
-      const r=await fetch(`${PROXY}/search?token=${encodeURIComponent(token)}&q=${encodeURIComponent(tg.query+' -reprint -lot -custom')}`);
+      const url=`${PROXY}/scan?clientId=${encodeURIComponent(clientId)}&clientSecret=${encodeURIComponent(clientSecret)}&q=${encodeURIComponent(tg.query+' -reprint -lot -custom')}`;
+      const r=await fetch(url);
       if(!r.ok)throw new Error('Search failed');
       const data=await r.json();
+      if(data.error)throw new Error(data.error);
       const listings=data.itemSummaries||[];
       scanData[tg.id]={loading:false,listings,ratings:{},aiLoading:listings.length>0,error:null};
       updateTabs();if(activeGrade===tg.id)renderListings();
