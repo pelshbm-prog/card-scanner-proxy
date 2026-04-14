@@ -12,7 +12,6 @@ app.get('/scan', async (req, res) => {
   try {
     const { clientId, clientSecret, q } = req.query;
     
-    // Step 1: Get token
     const credentials = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
     const tokenResp = await fetch('https://api.ebay.com/identity/v1/oauth2/token', {
       method: 'POST',
@@ -28,9 +27,8 @@ app.get('/scan', async (req, res) => {
     }
     const token = tokenData.access_token;
 
-    // Step 2: Search
     const encoded = encodeURIComponent(q);
-    const url = `https://api.ebay.com/buy/browse/v1/item_summary/search?q=${encoded}&category_ids=261328&sort=newlyListed&limit=20`;
+    const url = `https://api.ebay.com/buy/browse/v1/item_summary/search?q=${encoded}&category_ids=261328&sort=endingSoonest&limit=20&filter=buyingOptions:%7BAUCTION%7D,endTimeFrom:${new Date().toISOString()},endTimeTo:${new Date(Date.now()+3600000).toISOString()}`;
     const searchResp = await fetch(url, {
       headers: {
         'Authorization': `Bearer ${token}`,
