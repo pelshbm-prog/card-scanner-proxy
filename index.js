@@ -20,13 +20,11 @@ async function getToken(clientId, clientSecret) {
   return data.access_token;
 }
 
-// Get last 3 sold comps from eBay completed listings
 async function getSoldComps(token, title, grade) {
   try {
-    // Strip serial numbers and extra fluff from title for better matching
     const cleanTitle = title
-      .replace(/\d+\/\d+/g, '') // remove serial numbers
-      .replace(/R\d{4,}/gi, '') // remove cert numbers
+      .replace(/\d+\/\d+/g, '')
+      .replace(/R\d{4,}/gi, '')
       .replace(/PSA\s*\d+(\.\d+)?/gi, '')
       .replace(/BGS\s*\d+(\.\d+)?/gi, '')
       .replace(/SGC\s*\d+(\.\d+)?/gi, '')
@@ -53,7 +51,6 @@ async function getSoldComps(token, title, grade) {
     const data = await r.json();
     const items = data.itemSummaries || [];
 
-    // Get prices from similar recently listed items
     const prices = items
       .map(item => {
         const p = item.currentBidPrice || item.price;
@@ -64,7 +61,6 @@ async function getSoldComps(token, title, grade) {
     if (prices.length < 2) return null;
 
     prices.sort((a, b) => a - b);
-    // Trim outliers
     const trimmed = prices.length > 4 ? prices.slice(1, -1) : prices;
     const avg = trimmed.reduce((s, p) => s + p, 0) / trimmed.length;
     const low = Math.min(...trimmed);
@@ -132,13 +128,11 @@ app.get('/scan', async (req, res) => {
     const { clientId, clientSecret, grade } = req.query;
     const token = await getToken(clientId, clientSecret);
 
-    // Run auction and fixed price searches in parallel
     const [auctionItems, fixedItems] = await Promise.all([
       searchCards(token, grade, 'AUCTION'),
       searchCards(token, grade, 'FIXED_PRICE')
     ]);
 
-    // Combine and dedupe
     const seen = {};
     const all = [...auctionItems, ...fixedItems].filter(item => {
       if (seen[item.itemId]) return false;
@@ -146,10 +140,8 @@ app.get('/scan', async (req, res) => {
       return true;
     });
 
-    // Filter to exact grade
     const filtered = filterByGrade(all, grade || 'PSA 10');
 
-    // Sort auctions first then fixed price
     filtered.sort((a, b) => {
       const aIsAuction = (a.buyingOptions || []).includes('AUCTION');
       const bIsAuction = (b.buyingOptions || []).includes('AUCTION');
@@ -165,7 +157,6 @@ app.get('/scan', async (req, res) => {
 
     const top = filtered.slice(0, 30);
 
-    // Get sold comps for each card in parallel (max 10 at a time)
     const batchSize = 10;
     for (let i = 0; i < top.length; i += batchSize) {
       const batch = top.slice(i, i + batchSize);
