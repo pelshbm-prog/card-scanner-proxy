@@ -20,7 +20,8 @@ async function getToken(clientId, clientSecret) {
   return data.access_token;
 }
 
-async function getSoldComps(token, title, grade) {
+// Get real sold comps from eBay Finding API (last 90 days)
+async function getSoldComps(appId, title, grade) {
   try {
     const cleanTitle = title
       .replace(/\d+\/\d+/g, '')
@@ -31,30 +32,51 @@ async function getSoldComps(token, title, grade) {
       .replace(/GEM\s*MINT/gi, '')
       .replace(/GEM\s*MT/gi, '')
       .trim()
-      .slice(0, 70);
+      .slice(0, 60);
 
     const query = `${cleanTitle} ${grade}`;
-    const filter = 'buyingOptions:{AUCTION|FIXED_PRICE},conditionIds:{2750}';
-    const url = `https://api.ebay.com/buy/browse/v1/item_summary/search`
-      + `?q=${encodeURIComponent(query)}`
-      + `&category_ids=261328`
-      + `&filter=${encodeURIComponent(filter)}`
-      + `&sort=endingSoonest`
-      + `&limit=10`;
 
-    const r = await fetch(url, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'X-EBAY-C-MARKETPLACE-ID': 'EBAY_US'
-      }
-    });
+    // Finding API - completedItems gives real sold prices
+    const url = 'https://svcs.ebay.com/services/search/FindingService/v1'
+      + '?OPERATION-NAME=findCompletedItems'
+      + '&SERVICE-VERSION=1.0.0'
+      + '&SECURITY-APPNAME=' + encodeURIComponent(appId)
+      + '&RESPONSE-DATA-FORMAT=JSON'
+      + '&REST-PAYLOAD'
+      + '&keywords=' + encodeURIComponent(query)
+      + '&categoryId=261328'
+      + '&itemFilter(0).name=SoldItemsOnly'
+      + '&itemFilter(0).value=true'
+      + '&itemFilter(1).name=ListingType'
+      + '&itemFilter(1).value=AuctionWithBIN'
+      + '&itemFilter(2).name=ListingType'
+      + '&itemFilter(2).value=FixedPrice'
+      + '&itemFilter(3).name=ListingType'
+      + '&itemFilter(3).value=Auction'
+      + '&itemFilter(4).name=MinPrice'
+      + '&itemFilter(4).value=10'
+      + '&itemFilter(5).name=MaxPrice'
+      + '&itemFilter(5).value=50000'
+      + '&sortOrder=EndTimeSoonest'
+      + '&paginationInput.entriesPerPage=20';
+
+    const r = await fetch(url);
     const data = await r.json();
-    const items = data.itemSummaries || [];
+
+    const items = (data?.findCompletedItemsResponse?.[0]?.searchResult?.[0]?.item) || [];
+
+    // Filter to last 90 days
+    const ninetyDaysAgo = Date.now() - (90 * 24 * 60 * 60 * 1000);
 
     const prices = items
+      .filter(item => {
+        const endTime = item?.listingInfo?.[0]?.endTime?.[0];
+        if (!endTime) return false;
+        return new Date(endTime).getTime() > ninetyDaysAgo;
+      })
       .map(item => {
-        const p = item.currentBidPrice || item.price;
-        return p ? parseFloat(p.value) : null;
+        const price = item?.sellingStatus?.[0]?.currentPrice?.[0]?.__value__;
+        return price ? parseFloat(price) : null;
       })
       .filter(p => p && p > 5 && p < 100000);
 
@@ -66,7 +88,12 @@ async function getSoldComps(token, title, grade) {
     const low = Math.min(...trimmed);
     const high = Math.max(...trimmed);
 
-    return { low: Math.round(low), high: Math.round(high), mid: Math.round(avg), count: prices.length };
+    return {
+      low: Math.round(low),
+      high: Math.round(high),
+      mid: Math.round(avg),
+      count: prices.length
+    };
   } catch(e) {
     return null;
   }
@@ -143,7 +170,6 @@ app.get('/scan', async (req, res) => {
       searchCards(token, grade, 'FIXED_PRICE')
     ]);
 
-    // Combine and dedupe
     const seen = {};
     const all = [...auctionItems, ...fixedItems].filter(item => {
       if (seen[item.itemId]) return false;
@@ -151,13 +177,9 @@ app.get('/scan', async (req, res) => {
       return true;
     });
 
-    // Filter to exact grade
     const gradeFiltered = filterByGrade(all, grade || 'PSA 10');
-
-    // Remove zero bid auctions
     const withBids = removeZeroBidAuctions(gradeFiltered);
 
-    // Sort auctions ending soonest first then fixed price
     withBids.sort((a, b) => {
       const aIsAuction = (a.buyingOptions || []).includes('AUCTION');
       const bIsAuction = (b.buyingOptions || []).includes('AUCTION');
@@ -173,12 +195,12 @@ app.get('/scan', async (req, res) => {
 
     const top = withBids.slice(0, 30);
 
-    // Get sold comps for each card
+    // Get 90-day sold comps using Finding API
     const batchSize = 10;
     for (let i = 0; i < top.length; i += batchSize) {
       const batch = top.slice(i, i + batchSize);
       await Promise.all(batch.map(async (item) => {
-        const comps = await getSoldComps(token, item.title || '', grade || 'PSA 10');
+        const comps = await getSoldComps(clientId, item.title || '', grade || 'PSA 10');
         if (comps && comps.count >= 2) {
           item.soldComps = comps;
         }
