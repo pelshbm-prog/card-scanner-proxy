@@ -20,7 +20,6 @@ async function getToken(clientId, clientSecret) {
   return data.access_token;
 }
 
-// Get real sold comps from eBay Finding API (last 90 days)
 async function getSoldComps(appId, title, grade) {
   try {
     const cleanTitle = title
@@ -36,7 +35,6 @@ async function getSoldComps(appId, title, grade) {
 
     const query = `${cleanTitle} ${grade}`;
 
-    // Finding API - completedItems gives real sold prices
     const url = 'https://svcs.ebay.com/services/search/FindingService/v1'
       + '?OPERATION-NAME=findCompletedItems'
       + '&SERVICE-VERSION=1.0.0'
@@ -65,7 +63,6 @@ async function getSoldComps(appId, title, grade) {
 
     const items = (data?.findCompletedItemsResponse?.[0]?.searchResult?.[0]?.item) || [];
 
-    // Filter to last 90 days
     const ninetyDaysAgo = Date.now() - (90 * 24 * 60 * 60 * 1000);
 
     const prices = items
@@ -88,12 +85,7 @@ async function getSoldComps(appId, title, grade) {
     const low = Math.min(...trimmed);
     const high = Math.max(...trimmed);
 
-    return {
-      low: Math.round(low),
-      high: Math.round(high),
-      mid: Math.round(avg),
-      count: prices.length
-    };
+    return { low: Math.round(low), high: Math.round(high), mid: Math.round(avg), count: prices.length };
   } catch(e) {
     return null;
   }
@@ -154,6 +146,8 @@ function removeZeroBidAuctions(items) {
   return items.filter(item => {
     const isAuction = (item.buyingOptions || []).includes('AUCTION');
     if (!isAuction) return true;
+    // Remove Best Offer listings — no real competitive bids
+    if ((item.buyingOptions || []).includes('BEST_OFFER')) return false;
     const bid = item.currentBidPrice || item.price;
     const bidVal = bid ? parseFloat(bid.value) : 0;
     return bidVal > 0;
@@ -195,7 +189,6 @@ app.get('/scan', async (req, res) => {
 
     const top = withBids.slice(0, 30);
 
-    // Get 90-day sold comps using Finding API
     const batchSize = 10;
     for (let i = 0; i < top.length; i += batchSize) {
       const batch = top.slice(i, i + batchSize);
