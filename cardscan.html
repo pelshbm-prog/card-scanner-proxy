@@ -62,7 +62,7 @@ input{background:#070d1a;border:1px solid #1e293b;border-radius:8px;color:#e2e8f
 .logout{background:#1e293b;color:#64748b;border:1px solid #334155;border-radius:6px;padding:4px 10px;font-size:10px;font-family:'Share Tech Mono',monospace;cursor:pointer;letter-spacing:1px}
 .section-label{font-size:9px;color:#334155;letter-spacing:2px;margin-bottom:8px}
 .no-deals{text-align:center;padding:40px 20px;color:#334155;font-size:12px;line-height:2}
-.grade-badge{font-size:9px;color:#475569;margin-top:2px}
+.comp-label{font-size:9px;color:#334155;margin-top:2px}
 @keyframes spin{to{transform:rotate(360deg)}}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}
 .spin{display:inline-block;animation:spin 1s linear infinite}
@@ -96,7 +96,7 @@ input{background:#070d1a;border:1px solid #1e293b;border-radius:8px;color:#e2e8f
 <div class="section-label">SCANNING TARGETS</div>
 <div class="trending-bar" id="trendingBar"><span class="trend-pill">Loading players...</span></div>
 <div class="grade-tabs" id="gradeTabs"></div>
-<div id="listingsArea"><div class="empty">Hit RUN FULL SCAN<br/><span>20%+ undervalue deals only · 2hr auction window</span></div></div>
+<div id="listingsArea"><div class="empty">Hit RUN FULL SCAN<br/><span>20%+ undervalue · base cards only · 2hr window</span></div></div>
 </div>
 </div>
 <script>
@@ -109,14 +109,49 @@ var GRADES=[
 {id:'auto95',label:'AUTO 9.5+',grade:'AUTO',color:'#4ade80'}
 ];
 
-// ── MARKET VALUE DATABASE ──
-// Keyed by grade: psa10, psa9, bgs95, auto95
-// Each entry: p=player keywords, s=set keywords, low, high
-// IMPORTANT: values are grade-specific — PSA 9 ≠ PSA 10
-var DB = {
+// Words in title that indicate a parallel/insert — skip these
+// unless we have a specific comp for them
+var PARALLEL_KEYWORDS = [
+'prizm silver','silver prizm','green','red','blue','gold','orange','purple','pink',
+'holo','hyper','disco','camo','scope','wave','pulsar','shimmer','ice','scope',
+'cracked','tiger','mojo','peacock','neon','electric','lava','laser','choice',
+'instant impact','gridiron kings','elite series','press proof','rated rookie #',
+'the rookies','luminance','certified','clearly','stained glass','velocity',
+'optical','illusions','phoenix','absolute','spectra insert','national treasures insert',
+'epix','momentum','threads','chronicles insert','fathers day','memorial day',
+'black friday','the 100','downtown','neo','montage','virtual reality'
+];
 
-psa10: [
-// MAHOMES (2025-2026 verified sales)
+// Base set identifiers — these ARE the base cards we have comps for
+var BASE_SETS = {
+'mahomes': ['donruss rated rookie','prizm #269','panini prizm #269',
+'contenders rookie ticket','topps chrome','topps #346',
+'score #403','select','optic rated rookie','spectra','national treasures',
+'absolute','mosaic','chronicles','phoenix','prestige','illusions'],
+'brady': ['bowman chrome #236','bowman #200','topps chrome #166',
+'playoff contenders','contenders #144','sp authentic',
+'upper deck','fleer tradition','score #266','pacific','leaf'],
+'josh allen': ['prizm','donruss rated rookie','select','optic','contenders'],
+'lamar jackson': ['prizm','donruss rated rookie','select','optic','contenders'],
+'burrow': ['prizm','donruss rated rookie','select','optic','contenders'],
+'herbert': ['prizm','donruss rated rookie','select','optic','contenders'],
+'caleb williams': ['prizm','donruss rated rookie','select','optic'],
+'jayden daniels': ['prizm','donruss rated rookie','select','optic'],
+'jeanty': ['prizm','donruss rated rookie','select'],
+'wembanyama': ['prizm','hoops','donruss','select','nba hoops'],
+'flagg': ['topps chrome','prizm','hoops','topps'],
+'anthony edwards': ['prizm','hoops','donruss','select'],
+'luka': ['prizm','donruss','select','optic'],
+'tatum': ['prizm','donruss','select','optic'],
+'gilgeous': ['prizm','donruss','select'],
+'judge': ['topps chrome','topps','bowman chrome','bowman'],
+'ohtani': ['topps chrome','topps','bowman chrome'],
+'trout': ['topps chrome','topps','bowman chrome']
+};
+
+// Market values — grade-specific
+var DB = {
+psa10:[
 {p:'mahomes',s:'prizm',low:4200,high:5800},
 {p:'mahomes',s:'donruss',low:750,high:1050},
 {p:'mahomes',s:'optic',low:700,high:950},
@@ -129,9 +164,7 @@ psa10: [
 {p:'mahomes',s:'score',low:180,high:280},
 {p:'mahomes',s:'absolute',low:280,high:450},
 {p:'mahomes',s:'mosaic',low:280,high:420},
-{p:'mahomes',s:'phoenix',low:280,high:420},
 {p:'mahomes',s:'panini',low:150,high:280},
-// BRADY (2025-2026 verified sales)
 {p:'brady',s:'bowman chrome',low:11000,high:14500},
 {p:'brady',s:'bowman',low:900,high:1400},
 {p:'brady',s:'topps chrome',low:3200,high:5000},
@@ -141,68 +174,42 @@ psa10: [
 {p:'brady',s:'upper deck',low:450,high:750},
 {p:'brady',s:'fleer',low:380,high:650},
 {p:'brady',s:'score',low:280,high:480},
-{p:'brady',s:'pacific',low:280,high:450},
 {p:'brady',s:'topps',low:700,high:1100},
-// JOSH ALLEN
 {p:'josh allen',s:'prizm',low:350,high:600},
 {p:'josh allen',s:'donruss',low:180,high:320},
 {p:'josh allen',s:'select',low:280,high:450},
-{p:'josh allen',s:'optic',low:280,high:450},
-// LAMAR JACKSON
 {p:'lamar jackson',s:'prizm',low:280,high:450},
 {p:'lamar jackson',s:'donruss',low:150,high:280},
-// BURROW
 {p:'burrow',s:'prizm',low:180,high:320},
 {p:'burrow',s:'donruss',low:90,high:160},
-{p:'burrow',s:'select',low:140,high:250},
-// HERBERT
 {p:'herbert',s:'prizm',low:130,high:240},
 {p:'herbert',s:'donruss',low:70,high:130},
-// CALEB WILLIAMS
 {p:'caleb williams',s:'prizm',low:80,high:160},
 {p:'caleb williams',s:'donruss',low:50,high:100},
-// JAYDEN DANIELS
 {p:'jayden daniels',s:'prizm',low:60,high:120},
 {p:'jayden daniels',s:'donruss',low:40,high:80},
-// JEANTY
 {p:'jeanty',s:'prizm',low:50,high:110},
 {p:'jeanty',s:'donruss',low:30,high:65},
-// WEMBANYAMA
 {p:'wembanyama',s:'prizm',low:130,high:180},
 {p:'wembanyama',s:'hoops',low:60,high:90},
 {p:'wembanyama',s:'donruss',low:80,high:130},
-{p:'wembanyama',s:'select',low:100,high:160},
-// COOPER FLAGG
 {p:'flagg',s:'topps chrome',low:380,high:520},
 {p:'flagg',s:'prizm',low:300,high:480},
 {p:'flagg',s:'hoops',low:80,high:140},
-// ANTHONY EDWARDS
 {p:'anthony edwards',s:'prizm',low:180,high:280},
 {p:'anthony edwards',s:'hoops',low:50,high:90},
-// LUKA
 {p:'luka',s:'prizm',low:450,high:750},
 {p:'luka',s:'donruss',low:180,high:320},
-// TATUM
 {p:'tatum',s:'prizm',low:180,high:300},
-{p:'tatum',s:'donruss',low:90,high:160},
-// SGA
 {p:'gilgeous',s:'prizm',low:130,high:220},
-// JUDGE
 {p:'judge',s:'topps chrome',low:280,high:450},
 {p:'judge',s:'topps',low:180,high:300},
-// SHOHEI
 {p:'ohtani',s:'topps chrome',low:350,high:550},
 {p:'ohtani',s:'topps',low:250,high:400},
-// TROUT
 {p:'trout',s:'topps chrome',low:600,high:950},
-{p:'trout',s:'topps',low:350,high:600},
-// ACUNA
-{p:'acuna',s:'topps chrome',low:180,high:320},
-{p:'acuna',s:'topps',low:120,high:220}
+{p:'trout',s:'topps',low:350,high:600}
 ],
-
-psa9: [
-// MAHOMES PSA 9 (verified 2025-2026)
+psa9:[
 {p:'mahomes',s:'prizm',low:900,high:1200},
 {p:'mahomes',s:'donruss',low:230,high:400},
 {p:'mahomes',s:'optic',low:220,high:380},
@@ -213,8 +220,6 @@ psa9: [
 {p:'mahomes',s:'topps chrome',low:120,high:220},
 {p:'mahomes',s:'topps',low:90,high:160},
 {p:'mahomes',s:'score',low:70,high:120},
-{p:'mahomes',s:'panini',low:55,high:100},
-// BRADY PSA 9
 {p:'brady',s:'bowman chrome',low:3200,high:4800},
 {p:'brady',s:'bowman',low:280,high:480},
 {p:'brady',s:'topps chrome',low:1100,high:1900},
@@ -225,84 +230,49 @@ psa9: [
 {p:'brady',s:'fleer',low:130,high:240},
 {p:'brady',s:'score',low:100,high:180},
 {p:'brady',s:'topps',low:240,high:420},
-// JOSH ALLEN PSA 9
 {p:'josh allen',s:'prizm',low:130,high:240},
 {p:'josh allen',s:'donruss',low:70,high:130},
-{p:'josh allen',s:'select',low:100,high:180},
-// LAMAR JACKSON PSA 9
 {p:'lamar jackson',s:'prizm',low:100,high:180},
 {p:'lamar jackson',s:'donruss',low:55,high:100},
-// BURROW PSA 9
 {p:'burrow',s:'prizm',low:70,high:130},
 {p:'burrow',s:'donruss',low:35,high:65},
-{p:'burrow',s:'select',low:55,high:100},
-// HERBERT PSA 9
 {p:'herbert',s:'prizm',low:50,high:95},
-{p:'herbert',s:'donruss',low:28,high:55},
-// CALEB WILLIAMS PSA 9
 {p:'caleb williams',s:'prizm',low:30,high:60},
-{p:'caleb williams',s:'donruss',low:18,high:38},
-// JAYDEN DANIELS PSA 9
 {p:'jayden daniels',s:'prizm',low:24,high:48},
-{p:'jayden daniels',s:'donruss',low:15,high:30},
-// WEMBANYAMA PSA 9
+{p:'jeanty',s:'prizm',low:20,high:45},
 {p:'wembanyama',s:'prizm',low:50,high:90},
 {p:'wembanyama',s:'hoops',low:22,high:42},
-{p:'wembanyama',s:'donruss',low:32,high:60},
-// COOPER FLAGG PSA 9
 {p:'flagg',s:'topps chrome',low:140,high:220},
 {p:'flagg',s:'prizm',low:110,high:190},
-{p:'flagg',s:'hoops',low:28,high:55},
-// ANTHONY EDWARDS PSA 9
 {p:'anthony edwards',s:'prizm',low:65,high:115},
-{p:'anthony edwards',s:'hoops',low:18,high:35},
-// LUKA PSA 9
 {p:'luka',s:'prizm',low:160,high:280},
-{p:'luka',s:'donruss',low:70,high:130},
-// TATUM PSA 9
 {p:'tatum',s:'prizm',low:65,high:120},
-{p:'tatum',s:'donruss',low:32,high:60},
-// JUDGE PSA 9
 {p:'judge',s:'topps chrome',low:100,high:180},
-{p:'judge',s:'topps',low:65,high:120},
-// SHOHEI PSA 9
 {p:'ohtani',s:'topps chrome',low:130,high:230},
-{p:'ohtani',s:'topps',low:90,high:160},
-// TROUT PSA 9
-{p:'trout',s:'topps chrome',low:220,high:380},
-{p:'trout',s:'topps',low:130,high:240}
+{p:'trout',s:'topps chrome',low:220,high:380}
 ],
-
-bgs95: [
-// MAHOMES BGS 9.5
+bgs95:[
 {p:'mahomes',s:'prizm',low:2200,high:3500},
 {p:'mahomes',s:'donruss',low:420,high:680},
 {p:'mahomes',s:'optic',low:400,high:650},
 {p:'mahomes',s:'contenders',low:320,high:520},
-{p:'mahomes',s:'select',low:280,high:450},
 {p:'mahomes',s:'spectra',low:550,high:900},
-{p:'mahomes',s:'topps',low:130,high:240},
-// BRADY BGS 9.5
 {p:'brady',s:'bowman chrome',low:7000,high:10500},
 {p:'brady',s:'topps chrome',low:2000,high:3500},
 {p:'brady',s:'contenders',low:2100,high:3600},
 {p:'brady',s:'bowman',low:550,high:950},
-{p:'brady',s:'topps',low:420,high:700},
-// OTHERS BGS 9.5
 {p:'josh allen',s:'prizm',low:200,high:360},
 {p:'lamar jackson',s:'prizm',low:160,high:290},
 {p:'burrow',s:'prizm',low:110,high:200},
 {p:'wembanyama',s:'prizm',low:95,high:160},
 {p:'luka',s:'prizm',low:270,high:450},
-{p:'tatum',s:'prizm',low:110,high:190},
 {p:'flagg',s:'topps chrome',low:240,high:380},
 {p:'anthony edwards',s:'prizm',low:110,high:190},
 {p:'judge',s:'topps chrome',low:160,high:280},
 {p:'ohtani',s:'topps chrome',low:210,high:350},
 {p:'trout',s:'topps chrome',low:380,high:620}
 ],
-
-auto95: [
+auto95:[
 {p:'mahomes',s:'',low:3000,high:6000},
 {p:'brady',s:'',low:1500,high:3500},
 {p:'josh allen',s:'',low:500,high:950},
@@ -321,17 +291,35 @@ auto95: [
 {p:'judge',s:'',low:280,high:550},
 {p:'trout',s:'',low:350,high:700}
 ]
-
 };
 
-// Detect grade from card title
+function isParallelOrInsert(title) {
+var t = title.toLowerCase();
+// Strip known base identifiers first
+var baseTerms = ['rated rookie','rookie ticket','prizm #','#269','#327','#236',
+'#200','#166','#144','bowman chrome','bowman #','topps chrome','topps #',
+'sp authentic','upper deck','fleer','score #','nba hoops #','hoops #'];
+// Check for parallel/insert keywords
+for (var i = 0; i < PARALLEL_KEYWORDS.length; i++) {
+if (t.indexOf(PARALLEL_KEYWORDS[i]) >= 0) {
+// Check if it's a known base with this word in the set name
+// e.g. "Donruss Optic Rated Rookie" is base, "Donruss Optic Green" is parallel
+var isBase = false;
+for (var j = 0; j < baseTerms.length; j++) {
+if (t.indexOf(baseTerms[j]) >= 0) { isBase = true; break; }
+}
+if (!isBase) return true;
+}
+}
+return false;
+}
+
 function detectGradeFromTitle(title) {
 var t = title.toUpperCase();
 if (/BGS\s*9\.5/.test(t)) return 'bgs95';
-if (/BGS\s*10/.test(t)) return 'bgs95'; // treat BGS 10 as bgs95 tier
 if (/PSA\s*10/.test(t) && !/PSA\s*9[^0]/.test(t)) return 'psa10';
 if (/PSA\s*9(?!\.5|\s*10)/.test(t)) return 'psa9';
-if (/SGC\s*10/.test(t)) return 'psa10'; // SGC 10 = gem mint
+if (/SGC\s*10/.test(t)) return 'psa10';
 if (/SGC\s*9\.5/.test(t)) return 'bgs95';
 return null;
 }
@@ -339,17 +327,19 @@ return null;
 function getMarketValue(title, tabGradeId) {
 var t = title.toLowerCase();
 
-// CRITICAL: detect actual grade from title, not tab
+// Skip parallels and inserts
+if (isParallelOrInsert(title)) return null;
+
 var actualGrade = detectGradeFromTitle(title) || tabGradeId;
 var values = DB[actualGrade] || DB[tabGradeId] || DB['psa10'];
 
 var best = null, bestScore = 0;
 for (var i = 0; i < values.length; i++) {
 var c = values[i];
-if (t.indexOf(c.p) < 0) continue; // player must match
+if (t.indexOf(c.p) < 0) continue;
 var score = 1;
 if (c.s && c.s.length > 0) {
-if (t.indexOf(c.s) < 0) continue; // set must match
+if (t.indexOf(c.s) < 0) continue;
 score += c.s.split(' ').length;
 }
 if (score > bestScore) { bestScore = score; best = c; }
@@ -468,20 +458,19 @@ var h=Math.floor(mins/60),m=mins%60;
 return h+'h'+(m>0?' '+m+'m':'');
 }
 
-function rateCard(item, tabGradeId){
-var mv=getMarketValue(item.title||'', tabGradeId);
+function rateCard(item,tabGradeId){
+var mv=getMarketValue(item.title||'',tabGradeId);
 var bid=getCurrentBid(item);
 if(!mv)return null;
 if(!bid)return null;
 var pct=Math.round(((bid-mv.mid)/mv.mid)*100);
-if(pct>-20)return null; // only 20%+ under value
+if(pct>-20)return null;
 var isFire=pct<=-40;
-var text='';
-if(pct<=-40)text='🚨 '+Math.abs(pct)+'% below market. Bid immediately.';
-else if(pct<=-30)text='🔥 '+Math.abs(pct)+'% below market. Strong flip.';
-else text=Math.abs(pct)+'% below market. Worth bidding.';
-// Show what grade the value is based on
 var gradeLabel={'psa10':'PSA 10','psa9':'PSA 9','bgs95':'BGS 9.5','auto95':'AUTO'}[mv.grade]||mv.grade;
+var text='';
+if(pct<=-40)text='🚨 '+Math.abs(pct)+'% below '+gradeLabel+' market. Bid immediately.';
+else if(pct<=-30)text='🔥 '+Math.abs(pct)+'% below '+gradeLabel+' market. Strong flip.';
+else text=Math.abs(pct)+'% below '+gradeLabel+' market. Worth bidding.';
 return{tag:'DEAL',isFire:isFire,mv:mv,pct:pct,text:text,gradeLabel:gradeLabel};
 }
 
@@ -489,7 +478,7 @@ function renderListings(){
 var area=document.getElementById('listingsArea');
 var d=scanData[activeGrade]||{};
 var tg=GRADES.find(function(t){return t.id===activeGrade;});
-if(!d.deals&&!d.loading){area.innerHTML='<div class="empty">Hit RUN FULL SCAN<br/><span>20%+ undervalue deals only · 2hr window</span></div>';return;}
+if(!d.deals&&!d.loading){area.innerHTML='<div class="empty">Hit RUN FULL SCAN<br/><span>20%+ undervalue · base cards only · 2hr window</span></div>';return;}
 if(d.loading){area.innerHTML='<div class="loading"><span class="spin">⟳</span><br/>'+(d.status||'Scanning...')+'</div>';return;}
 if(d.error){area.innerHTML='<div class="err">'+d.error+'</div>';return;}
 if(!d.deals||!d.deals.length){
@@ -521,7 +510,7 @@ return '<div class="listing-card '+cardClass+'">'
 +'</div></div>'
 +'<div class="metrics-row">'
 +'<div class="metric"><div class="metric-label">CURRENT BID</div><div class="metric-value gold">'+(currentBid?formatPrice(currentBid):'—')+'</div></div>'
-+'<div class="metric"><div class="metric-label">MARKET VALUE</div><div class="metric-value" style="font-size:10px;line-height:1.4">'+formatPrice(rating.mv.low)+' – '+formatPrice(rating.mv.high)+'</div><div class="grade-badge">'+rating.gradeLabel+' comps</div></div>'
++'<div class="metric"><div class="metric-label">MARKET VALUE</div><div class="metric-value" style="font-size:10px;line-height:1.4">'+formatPrice(rating.mv.low)+' – '+formatPrice(rating.mv.high)+'</div><div class="comp-label">'+rating.gradeLabel+' base</div></div>'
 +'<div class="metric"><div class="metric-label">BELOW MARKET</div><div class="metric-value '+pctClass+'" style="font-size:15px">'+pctStr+'</div></div>'
 +'</div>'
 +'<div class="ai-text">'+rating.text+'</div>'
@@ -556,7 +545,7 @@ var gi=0;
 function nextGrade(){
 if(gi>=GRADES.length){scanning=false;btn.disabled=false;btn.textContent='⚡ RUN FULL SCAN';return;}
 var tg=GRADES[gi];gi++;
-scanData[tg.id]={loading:true,deals:[],error:null,status:'Scanning '+tg.label+' auctions...'};
+scanData[tg.id]={loading:true,deals:[],error:null,status:'Scanning '+tg.label+'...'};
 updateTabs();if(activeGrade===tg.id)renderListings();
 var all=[],done=0;
 players.forEach(function(player){
