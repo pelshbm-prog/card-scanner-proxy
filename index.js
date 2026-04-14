@@ -12,53 +12,71 @@ const ANCHOR_PLAYERS = ['Mahomes', 'Tom Brady', 'LeBron James', 'Stephen Curry']
 
 async function getTrendingPlayers(token) {
   try {
-    const searches = ['trending sports cards rookie PSA', 'hot rookie card PSA 10 2025'];
     const players = new Set(ANCHOR_PLAYERS);
+    const searches = [
+      'PSA 10 rookie auction hot 2025',
+      'BGS 9.5 rookie auction trending',
+      'PSA 10 rookie football basketball baseball 2024 2025'
+    ];
+    const namePattern = /\b(Mahomes|Brady|LeBron|Curry|Burrow|Herbert|Stroud|CJ Stroud|Williams|Lamar Jackson|Josh Allen|Jeanty|Harrison|Bo Nix|Daniels|Richardson|Caleb Williams|Anthony Richardson|Wembanyama|Caitlin Clark|Cooper Flagg|Boozer|Luka|Giannis|Tatum|SGA|Tyrese|Scottie|Shohei|Judge|Acuna|Soto|Trout|Bichette|Vlad Jr)\b/gi;
     for (const q of searches) {
-      const url = `https://api.ebay.com/buy/browse/v1/item_summary/search?q=${encodeURIComponent(q)}&category_ids=261328&sort=bestMatch&limit=20`;
+      const url = `https://api.ebay.com/buy/browse/v1/item_summary/search?q=${encodeURIComponent(q)}&category_ids=261328&sort=bestMatch&limit=30`;
       const r = await fetch(url, {
         headers: { 'Authorization': `Bearer ${token}`, 'X-EBAY-C-MARKETPLACE-ID': 'EBAY_US' }
       });
       const data = await r.json();
-      const items = data.itemSummaries || [];
-      const namePattern = /\b(mahomes|brady|lebron|curry|burrow|herbert|stroud|williams|jackson|Allen|Jeanty|Harrison|Nix|daniels|Richardson|Caleb|Young|Rodgers|Wembanyama|Caitlin Clark|Flagg|Boozer)\b/gi;
-      items.forEach(item => {
+      (data.itemSummaries || []).forEach(item => {
         const matches = (item.title || '').match(namePattern);
         if (matches) matches.forEach(m => players.add(m));
       });
     }
-    return [...players].slice(0, 12);
+    return [...players].slice(0, 10);
   } catch(e) {
     return ANCHOR_PLAYERS;
   }
 }
 
+async function getToken(clientId, clientSecret) {
+  const credentials = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
+  const r = await fetch('https://api.ebay.com/identity/v1/oauth2/token', {
+    method: 'POST',
+    headers: { 'Authorization': `Basic ${credentials}`, 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: 'grant_type=client_credentials&scope=https://api.ebay.com/oauth/api_scope'
+  });
+  const data = await r.json();
+  if (!data.access_token) throw new Error('Auth failed');
+  return data.access_token;
+}
+
 app.get('/scan', async (req, res) => {
   try {
-    const { clientId, clientSecret, q } = req.query;
-
-    const credentials = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
-    const tokenResp = await fetch('https://api.ebay.com/identity/v1/oauth2/token', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Basic ${credentials}`,
-        'Content-Type': 'application/x-www-form-urlencoded'
-      },
-      body: 'grant_type=client_credentials&scope=https://api.ebay.com/oauth/api_scope'
-    });
-    const tokenData = await tokenResp.json();
-    if (!tokenData.access_token) return res.json({ error: 'Auth failed' });
-    const token = tokenData.access_token;
-
+    const { clientId, clientSecret, q, grade } = req.query;
+    const token = await getToken(clientId, clientSecret);
     const encoded = encodeURIComponent(q);
     const now = new Date().toISOString();
-    const oneHour = new Date(Date.now() + 3600000).toISOString();
-    const url = `https://api.ebay.com/buy/browse/v1/item_summary/search?q=${encoded}&category_ids=261328&sort=endingSoonest&limit=20&filter=buyingOptions:%7BAUCTION%7D,endTimeFrom:${now},endTimeTo:${oneHour}`;
-    const searchResp = await fetch(url, {
+    const twoHours = new Date(Date.now() + 7200000).toISOString();
+    const url = `https://api.ebay.com/buy/browse/v1/item_summary/search?q=${encoded}&category_ids=261328&sort=endingSoonest&limit=50&filter=buyingOptions:%7BAUCTION%7D,endTimeFrom:${now},endTimeTo:${twoHours}`;
+    const r = await fetch(url, {
       headers: { 'Authorization': `Bearer ${token}`, 'X-EBAY-C-MARKETPLACE-ID': 'EBAY_US' }
     });
-    const searchData = await searchResp.json();
-    res.json(searchData);
+    const data = await r.json();
+
+    if (grade && data.itemSummaries) {
+      const gradeUpper = grade.toUpperCase();
+      data.itemSummaries = data.itemSummaries.filter(item => {
+        const title = (item.title || '').toUpperCase();
+        const condition = (item.condition || '').toUpperCase();
+        const isGraded = condition === 'GRADED' || title.includes('PSA') || title.includes('BGS') || title.includes('SGC') || title.includes('CGC');
+        if (!isGraded) return false;
+        if (gradeUpper === 'PSA 10') return /PSA\s*10/.test(title) && !/PSA\s*9[^0]/.test(title) && !/BGS/.test(title);
+        if (gradeUpper === 'PSA 9') return /PSA\s*9(?!\.5|\s*10)/.test(title) && !/BGS/.test(title);
+        if (gradeUpper === 'BGS 9.5') return /BGS\s*9\.5/.test(title);
+        if (gradeUpper === 'BGS 10') return /BGS\s*10/.test(title) && !/BGS\s*9/.test(title);
+        return true;
+      });
+    }
+
+    res.json(data);
   } catch(e) {
     res.json({ error: e.message });
   }
@@ -67,18 +85,8 @@ app.get('/scan', async (req, res) => {
 app.get('/trending', async (req, res) => {
   try {
     const { clientId, clientSecret } = req.query;
-    const credentials = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
-    const tokenResp = await fetch('https://api.ebay.com/identity/v1/oauth2/token', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Basic ${credentials}`,
-        'Content-Type': 'application/x-www-form-urlencoded'
-      },
-      body: 'grant_type=client_credentials&scope=https://api.ebay.com/oauth/api_scope'
-    });
-    const tokenData = await tokenResp.json();
-    if (!tokenData.access_token) return res.json({ error: 'Auth failed' });
-    const players = await getTrendingPlayers(tokenData.access_token);
+    const token = await getToken(clientId, clientSecret);
+    const players = await getTrendingPlayers(token);
     res.json({ players });
   } catch(e) {
     res.json({ players: ANCHOR_PLAYERS });
@@ -88,17 +96,8 @@ app.get('/trending', async (req, res) => {
 app.get('/token', async (req, res) => {
   try {
     const { clientId, clientSecret } = req.query;
-    const credentials = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
-    const response = await fetch('https://api.ebay.com/identity/v1/oauth2/token', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Basic ${credentials}`,
-        'Content-Type': 'application/x-www-form-urlencoded'
-      },
-      body: 'grant_type=client_credentials&scope=https://api.ebay.com/oauth/api_scope'
-    });
-    const data = await response.json();
-    res.json(data);
+    const token = await getToken(clientId, clientSecret);
+    res.json({ access_token: token });
   } catch(e) {
     res.json({ error: e.message });
   }
