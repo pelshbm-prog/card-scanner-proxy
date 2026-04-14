@@ -29,8 +29,8 @@ input{background:#070d1a;border:1px solid #1e293b;border-radius:8px;color:#e2e8f
 .trend-pill.anchor{border-color:#f59e0b44;color:#f59e0b;background:#f59e0b11}
 .grade-tabs{display:flex;gap:6px;margin-bottom:16px;overflow-x:auto;padding-bottom:4px}
 .grade-tab{background:#070d1a;border:1px solid #1e293b;border-radius:10px;color:#475569;font-family:'Share Tech Mono',monospace;font-size:11px;font-weight:700;letter-spacing:1px;padding:8px 14px;cursor:pointer;white-space:nowrap}
-.listing-card{background:linear-gradient(135deg,#0a0f1e,#0f172a);border:1px solid #1e293b;border-radius:12px;padding:14px;margin-bottom:10px;transition:border-color 0.2s}
-.listing-card.is-deal{border-color:#f59e0b88;background:linear-gradient(135deg,#0f0d00,#131200)}
+.listing-card{background:linear-gradient(135deg,#0a0f1e,#0f172a);border:1px solid #1e293b;border-radius:12px;padding:14px;margin-bottom:10px}
+.listing-card.is-deal{border-color:#f59e0b88;background:linear-gradient(135deg,#100e00,#131200)}
 .card-top{display:flex;gap:12px;align-items:flex-start;margin-bottom:10px}
 .listing-img{width:60px;height:82px;object-fit:contain;border-radius:6px;flex-shrink:0;background:#1e293b}
 .card-info{flex:1;min-width:0}
@@ -46,13 +46,13 @@ input{background:#070d1a;border:1px solid #1e293b;border-radius:8px;color:#e2e8f
 .metrics-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:10px}
 .metric{background:#070d1a;border:1px solid #1e293b;border-radius:8px;padding:8px;text-align:center}
 .metric-label{font-size:8px;color:#475569;letter-spacing:1px;margin-bottom:3px}
-.metric-value{font-family:'Orbitron',monospace;font-size:14px;font-weight:700;color:#e2e8f0}
+.metric-value{font-family:'Orbitron',monospace;font-size:13px;font-weight:700;color:#e2e8f0}
 .metric-value.green{color:#4ade80}
 .metric-value.red{color:#f87171}
 .metric-value.gold{color:#f59e0b}
 .ai-text{font-size:11px;color:#94a3b8;margin-bottom:10px;line-height:1.5;background:#ffffff06;border-radius:6px;padding:8px}
 .bid-btn{display:block;width:100%;background:linear-gradient(135deg,#b45309,#f59e0b);color:#000;border:none;border-radius:8px;padding:10px;font-size:13px;font-family:'Orbitron',monospace;font-weight:700;cursor:pointer;text-decoration:none;text-align:center;letter-spacing:2px}
-.bid-btn.urgent{animation:pulse 0.8s infinite;background:linear-gradient(135deg,#dc2626,#ef4444);color:#fff}
+.bid-btn.urgent{background:linear-gradient(135deg,#dc2626,#ef4444);color:#fff;animation:pulse 0.8s infinite}
 .empty{text-align:center;padding:60px 20px;color:#1e293b;font-size:13px}
 .empty span{color:#334155}
 .loading{text-align:center;padding:30px;color:#334155;font-size:12px;line-height:2}
@@ -94,7 +94,7 @@ input{background:#070d1a;border:1px solid #1e293b;border-radius:8px;color:#e2e8f
 <div class="section-label">SCANNING TARGETS</div>
 <div class="trending-bar" id="trendingBar"><span class="trend-pill">Loading players...</span></div>
 <div class="grade-tabs" id="gradeTabs"></div>
-<div id="listingsArea"><div class="empty">Hit RUN FULL SCAN<br/><span>Auctions ending in 2 hours · sorted by ending soonest</span></div></div>
+<div id="listingsArea"><div class="empty">Hit RUN FULL SCAN<br/><span>Auctions ending in 2 hours · sorted soonest</span></div></div>
 </div>
 </div>
 <script>
@@ -191,8 +191,8 @@ return v>0?v:null;
 }
 
 function formatPrice(val){
-if(!val)return'—';
-return'$'+val.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+if(!val&&val!==0)return'—';
+return'$'+parseFloat(val).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
 }
 
 function formatEndTime(item){
@@ -213,15 +213,17 @@ lines.forEach(function(line){
 var n=parseInt((line.match(/^(\d+)\./)||[])[1]);
 if(!n)return;
 var tag=/DEAL|🔥/.test(line)?'DEAL':/PASS|⚠️/.test(line)?'PASS':'FAIR';
-var marketMatch=line.match(/\$(\d[\d,]*)\s*[-–]\s*\$(\d[\d,]*)/);
+var rangeMatch=line.match(/\$(\d[\d,]*)\s*[-–]\s*\$(\d[\d,]*)/);
 var singleMatch=line.match(/\$(\d[\d,]+)/);
 var marketLow=null,marketHigh=null,marketMid=null;
-if(marketMatch){
-marketLow=parseFloat(marketMatch[1].replace(/,/g,''));
-marketHigh=parseFloat(marketMatch[2].replace(/,/g,''));
+if(rangeMatch){
+marketLow=parseFloat(rangeMatch[1].replace(/,/g,''));
+marketHigh=parseFloat(rangeMatch[2].replace(/,/g,''));
 marketMid=(marketLow+marketHigh)/2;
 }else if(singleMatch){
 marketMid=parseFloat(singleMatch[1].replace(/,/g,''));
+marketLow=marketMid*0.85;
+marketHigh=marketMid*1.15;
 }
 var cleanText=line.replace(/^\d+\.\s*/,'').replace(/\[.*?\]\s*/,'');
 results[n]={tag:tag,marketMid:marketMid,marketLow:marketLow,marketHigh:marketHigh,text:cleanText};
@@ -238,36 +240,29 @@ if(d.loading){area.innerHTML='<div class="loading"><span class="spin">⟳</span>
 if(d.error){area.innerHTML='<div class="err">'+d.error+'</div>';return;}
 if(d.aiLoading){area.innerHTML='<div class="ai-loading" style="border-left:3px solid '+tg.color+'">● AI analyzing '+d.listings.length+' listings — calculating value gaps...</div>';return;}
 if(!d.listings||!d.listings.length){area.innerHTML='<div class="empty"><span>No auctions ending soon.<br/>Try again in a few minutes.</span></div>';return;}
-
 area.innerHTML=d.listings.map(function(item,i){
 var rating=d.ratings?d.ratings[i+1]:null;
 var currentBid=getCurrentBid(item);
 var timeLeft=formatEndTime(item);
 var img=item.image?item.image.imageUrl:'';
-var isUrgent=timeLeft&&(timeLeft.indexOf('m')==timeLeft.length-1)&&parseInt(timeLeft)<=30;
+var urgentMins=timeLeft&&timeLeft.indexOf('m')===timeLeft.length-1&&parseInt(timeLeft)<=30;
 var isDeal=rating&&rating.tag==='DEAL';
-
-// Calculate % difference
-var pctHtml='—';
+var tagClass=rating?(rating.tag==='DEAL'?'deal':rating.tag==='PASS'?'pass':'fair'):'';
+var tagLabel=rating?(rating.tag==='DEAL'?'🔥 DEAL':rating.tag==='PASS'?'⚠️ PASS':'✅ FAIR'):'';
+var marketStr='—';
+if(rating&&rating.marketLow&&rating.marketHigh){
+marketStr=formatPrice(rating.marketLow)+' – '+formatPrice(rating.marketHigh);
+}else if(rating&&rating.marketMid){
+marketStr='~'+formatPrice(rating.marketMid);
+}
+var pctStr='—';
 var pctClass='';
 if(currentBid&&rating&&rating.marketMid){
 var pct=Math.round(((currentBid-rating.marketMid)/rating.marketMid)*100);
-if(pct<0){
-pctClass='green';
-pctHtml=pct+'%';
-}else if(pct===0){
-pctClass='';
-pctHtml='AT MKT';
-}else{
-pctClass='red';
-pctHtml='+'+pct+'%';
+if(pct<=-5){pctStr=pct+'%';pctClass='green';}
+else if(pct>=5){pctStr='+'+pct+'%';pctClass='red';}
+else{pctStr='AT MKT';pctClass='';}
 }
-}
-
-var tagClass=rating?(rating.tag==='DEAL'?'deal':rating.tag==='PASS'?'pass':'fair'):'';
-var tagLabel=rating?(rating.tag==='DEAL'?'🔥 DEAL':rating.tag==='PASS'?'⚠️ PASS':'✅ FAIR'):'';
-var marketStr=rating&&rating.marketLow&&rating.marketHigh?formatPrice(rating.marketLow)+' – '+formatPrice(rating.marketHigh):rating&&rating.marketMid?'~'+formatPrice(rating.marketMid):'—';
-
 return '<div class="listing-card'+(isDeal?' is-deal':'')+'">'
 +'<div class="card-top">'
 +(img?'<img class="listing-img" src="'+img+'" alt=""/>':'')
@@ -275,18 +270,17 @@ return '<div class="listing-card'+(isDeal?' is-deal':'')+'">'
 +'<div class="tags">'
 +(rating&&tagLabel?'<span class="tag '+tagClass+'">'+tagLabel+'</span>':'')
 +'<span class="tag auction-tag">AUCTION</span>'
-+(timeLeft?'<span class="tag ending'+(isUrgent?' urgent':'')+'">⏱ '+timeLeft+'</span>':'')
++(timeLeft?'<span class="tag ending'+(urgentMins?' urgent':'')+'">⏱ '+timeLeft+'</span>':'')
 +'</div>'
 +'<div class="card-title">'+(item.title||'')+'</div>'
-+'</div>'
-+'</div>'
++'</div></div>'
 +'<div class="metrics-row">'
 +'<div class="metric"><div class="metric-label">CURRENT BID</div><div class="metric-value gold">'+(currentBid?formatPrice(currentBid):'No bids')+'</div></div>'
-+'<div class="metric"><div class="metric-label">AI MARKET VALUE</div><div class="metric-value" style="font-size:11px">'+marketStr+'</div></div>'
-+'<div class="metric"><div class="metric-label">VS MARKET</div><div class="metric-value '+pctClass+'" style="font-size:16px">'+pctHtml+'</div></div>'
++'<div class="metric"><div class="metric-label">AI MARKET VALUE</div><div class="metric-value" style="font-size:10px;line-height:1.3">'+marketStr+'</div></div>'
++'<div class="metric"><div class="metric-label">VS MARKET</div><div class="metric-value '+pctClass+'" style="font-size:16px">'+pctStr+'</div></div>'
 +'</div>'
 +(rating&&rating.text?'<div class="ai-text">'+rating.text+'</div>':'')
-+'<a class="bid-btn'+(isUrgent?' urgent':'')+'" href="'+(item.itemWebUrl||'#')+'" target="_blank">'+(isUrgent?'⚡ BID NOW — ENDING SOON':'BID ON EBAY →')+'</a>'
++'<a class="bid-btn'+(urgentMins?' urgent':'')+'" href="'+(item.itemWebUrl||'#')+'" target="_blank">'+(urgentMins?'⚡ BID NOW — ENDING SOON':'BID ON EBAY →')+'</a>'
 +'</div>';
 }).join('');
 }
@@ -314,11 +308,10 @@ btn.disabled=true;btn.textContent='⟳ SCANNING...';
 document.getElementById('lastScan').textContent='Last: '+new Date().toLocaleTimeString();
 var players=trendingPlayers.length>0?trendingPlayers:ANCHORS;
 var gi=0;
-
 function nextGrade(){
 if(gi>=GRADES.length){scanning=false;btn.disabled=false;btn.textContent='⚡ RUN FULL SCAN';return;}
 var tg=GRADES[gi];gi++;
-scanData[tg.id]={loading:true,listings:[],ratings:{},aiLoading:false,error:null,status:'Searching '+players.length+' players for '+tg.grade+'...'};
+scanData[tg.id]={loading:true,listings:[],ratings:{},aiLoading:false,error:null,status:'Searching for '+tg.grade+' auctions ending soon...'};
 updateTabs();if(activeGrade===tg.id)renderListings();
 var all=[],done=0;
 players.forEach(function(player){
@@ -344,17 +337,15 @@ nextGrade();return;
 }
 scanData[tg.id]={loading:false,listings:listings,ratings:{},aiLoading:true,error:null};
 updateTabs();if(activeGrade===tg.id)renderListings();
-
 var itemList=listings.slice(0,8).map(function(it,idx){
 var bid=getCurrentBid(it);
 var time=formatEndTime(it)||'ending soon';
-return (idx+1)+'. Current bid: '+(bid?formatPrice(bid):'no bids')+' · '+time+' · '+(it.title||'').slice(0,70);
+return (idx+1)+'. Bid: '+(bid?formatPrice(bid):'no bids')+' · '+time+' · '+(it.title||'').slice(0,70);
 }).join('\n');
-
 fetch('https://api.anthropic.com/v1/messages',{
 method:'POST',headers:{'Content-Type':'application/json'},
 body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1200,
-messages:[{role:'user',content:'You are an expert sports card reseller. These are live eBay auctions ending within 2 hours for '+tg.grade+' rookie cards. For each one give me the market value range and whether to bid.\n\n'+itemList+'\n\nFor each number respond EXACTLY like this:\n1. [DEAL🔥/FAIR✅/PASS⚠️] Market value $X-$Y. Current bid is X% below/above/at market. One sentence action.\n\nInclude the dollar range on every single item so I can calculate the gap. Be fast and direct.'}]})
+messages:[{role:'user',content:'Expert sports card reseller. Live eBay auctions ending within 2 hours for '+tg.grade+' rookie cards. Need instant bid decisions.\n\n'+itemList+'\n\nFor EACH item respond exactly:\n1. [DEAL🔥/FAIR✅/PASS⚠️] Market value $LOW-$HIGH. Current bid is X% below/above market. Bid or skip.\n\nMust include $X-$Y range for every item. Be fast.'}]})
 }).then(function(r){return r.json();})
 .then(function(ad){
 var text=(ad.content&&ad.content[0])?ad.content[0].text:'';
@@ -362,7 +353,9 @@ scanData[tg.id]={loading:false,listings:listings,ratings:parseAIData(text),aiLoa
 updateTabs();if(activeGrade===tg.id)renderListings();
 nextGrade();
 }).catch(function(){
-scanData[tg.id].aiLoading=false;updateTabs();if(activeGrade===tg.id)renderListings();nextGrade();
+scanData[tg.id].aiLoading=false;
+updateTabs();if(activeGrade===tg.id)renderListings();
+nextGrade();
 });
 });
 });
