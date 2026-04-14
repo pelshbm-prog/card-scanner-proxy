@@ -1,301 +1,105 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>CardScan</title>
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet"/>
-<style>
-*{box-sizing:border-box;margin:0;padding:0}
-body{background:#04080f;color:#e2e8f0;font-family:'Share Tech Mono',monospace;min-height:100vh}
-.header{border-bottom:1px solid #0f172a;background:linear-gradient(180deg,#070d1a 0%,#04080f 100%);padding:18px 16px}
-.logo{font-family:'Orbitron',sans-serif;font-size:28px;font-weight:900;color:#e2e8f0;letter-spacing:4px}
-.logo span{color:#f59e0b}
-.subtitle{font-size:10px;color:#334155;letter-spacing:3px;margin-top:2px}
-.content{max-width:700px;margin:0 auto;padding:20px 16px 80px}
-.auth-panel{background:linear-gradient(135deg,#070d1a 0%,#0a1020 100%);border:1px solid #1e293b;border-radius:14px;padding:24px}
-.auth-title{font-family:'Orbitron',monospace;font-size:16px;font-weight:700;color:#f59e0b;margin-bottom:6px;letter-spacing:2px}
-.auth-sub{font-size:12px;color:#475569;margin-bottom:20px;line-height:1.6}
-.field{margin-bottom:12px}
-.field-label{font-size:10px;color:#475569;letter-spacing:2px;margin-bottom:6px}
-input{background:#070d1a;border:1px solid #1e293b;border-radius:8px;color:#e2e8f0;font-family:'Share Tech Mono',monospace;font-size:13px;padding:11px 14px;width:100%;outline:none}
-.error-box{background:#1c0a0a;border:1px solid #f8717133;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:11px;color:#f87171;display:none}
-.btn{width:100%;border:none;border-radius:10px;font-family:'Orbitron',monospace;font-weight:700;letter-spacing:3px;padding:14px;cursor:pointer}
-.btn-orange{background:linear-gradient(135deg,#b45309 0%,#f59e0b 100%);color:#000;font-size:15px}
-.btn-scan{background:linear-gradient(135deg,#b45309 0%,#f59e0b 100%);color:#000;font-size:18px;border-radius:12px;margin-bottom:12px;box-shadow:0 0 30px #f59e0b33}
-.btn:disabled{background:#1e293b;color:#475569;cursor:not-allowed;box-shadow:none}
-.trending-bar{display:flex;gap:6px;margin-bottom:16px;overflow-x:auto;padding-bottom:4px;flex-wrap:nowrap}
-.trend-pill{background:#1e293b;border:1px solid #334155;border-radius:20px;color:#94a3b8;font-family:'Share Tech Mono',monospace;font-size:10px;padding:4px 10px;white-space:nowrap;letter-spacing:0.5px}
-.trend-pill.anchor{border-color:#f59e0b44;color:#f59e0b;background:#f59e0b11}
-.grade-tabs{display:flex;gap:6px;margin-bottom:16px;overflow-x:auto;padding-bottom:4px}
-.grade-tab{background:#070d1a;border:1px solid #1e293b;border-radius:10px;color:#475569;font-family:'Share Tech Mono',monospace;font-size:11px;font-weight:700;letter-spacing:1px;padding:8px 14px;cursor:pointer;white-space:nowrap}
-.listing-card{background:linear-gradient(135deg,#0a0f1e,#0f172a);border:1px solid #1e293b;border-radius:10px;padding:12px;display:flex;gap:12px;margin-bottom:8px}
-.listing-img{width:54px;height:74px;object-fit:contain;border-radius:4px;flex-shrink:0;background:#1e293b}
-.listing-body{flex:1;min-width:0}
-.tags{display:flex;gap:6px;margin-bottom:5px;flex-wrap:wrap}
-.tag{border-radius:4px;padding:2px 8px;font-size:10px;letter-spacing:1px;font-weight:700}
-.deal{background:#f59e0b22;color:#f59e0b;border:1px solid #f59e0b44}
-.fair{background:#38bdf822;color:#38bdf8;border:1px solid #38bdf844}
-.pass{background:#f8717122;color:#f87171;border:1px solid #f8717144}
-.auction{background:#a78bfa22;color:#a78bfa;border:1px solid #a78bfa44;font-size:9px}
-.ending{background:#ef444422;color:#ef4444;border:1px solid #ef444444;font-size:9px}
-.title{font-size:12px;color:#cbd5e1;line-height:1.4;margin-bottom:6px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
-.ai-text{font-size:10px;color:#64748b;margin-bottom:6px;line-height:1.4}
-.footer{display:flex;justify-content:space-between;align-items:center}
-.price{font-family:'Orbitron',monospace;font-size:16px;font-weight:700;color:#f59e0b}
-.price-sub{font-size:9px;color:#475569;margin-top:1px}
-.view-link{background:#1e293b;color:#94a3b8;border:1px solid #334155;border-radius:6px;padding:4px 10px;font-size:10px;text-decoration:none;letter-spacing:1px}
-.empty{text-align:center;padding:60px 20px;color:#1e293b;font-size:13px}
-.empty span{color:#334155}
-.loading{text-align:center;padding:30px;color:#334155;font-size:12px;line-height:2}
-.ai-loading{background:#0f172a;border:1px solid #1e293b;border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:11px;color:#64748b}
-.err{padding:16px;background:#1c0a0a;border:1px solid #f8717133;border-radius:8px;font-size:12px;color:#f87171}
-.deal-badge{background:#f59e0b22;border:1px solid #f59e0b44;border-radius:8px;padding:6px 12px;font-family:'Orbitron',monospace;font-size:14px;color:#f59e0b;font-weight:700;display:none}
-.logout{background:#1e293b;color:#64748b;border:1px solid #334155;border-radius:6px;padding:4px 10px;font-size:10px;font-family:'Share Tech Mono',monospace;cursor:pointer;letter-spacing:1px}
-.section-label{font-size:9px;color:#334155;letter-spacing:2px;margin-bottom:8px}
-@keyframes spin{to{transform:rotate(360deg)}}
-.spin{display:inline-block;animation:spin 1s linear infinite}
-</style>
-</head>
-<body>
-<div class="header">
-<div style="max-width:700px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
-<div>
-<div class="logo">CARD<span>SCAN</span></div>
-<div class="subtitle">AUCTION SNIPER · ENDING SOON</div>
-</div>
-<div style="display:flex;align-items:center;gap:12px">
-<div id="dealBadge" class="deal-badge">🔥 <span id="dealCount">0</span> DEALS</div>
-<div id="lastScan" style="font-size:10px;color:#334155"></div>
-<button class="logout" id="logoutBtn" style="display:none" onclick="logout()">DISCONNECT</button>
-</div>
-</div>
-</div>
-<div class="content">
-<div id="authPanel" class="auth-panel">
-<div class="auth-title">CONNECT EBAY</div>
-<div class="auth-sub">Paste your Production keys from developer.ebay.com</div>
-<div class="field"><div class="field-label">CLIENT ID</div><input type="text" id="clientId" placeholder="BrianPel-Cardtrac-PRD-..."/></div>
-<div class="field" style="margin-bottom:18px"><div class="field-label">CLIENT SECRET</div><input type="password" id="clientSecret" placeholder="PRD-..."/></div>
-<div id="authError" class="error-box"></div>
-<button class="btn btn-orange" id="connectBtn" onclick="handleAuth()">CONNECT & SCAN</button>
-</div>
-<div id="scannerPanel" style="display:none">
-<button class="btn btn-scan" id="scanBtn" onclick="runFullScan()">⚡ RUN FULL SCAN</button>
-<div class="section-label">SCANNING TARGETS</div>
-<div class="trending-bar" id="trendingBar"></div>
-<div class="grade-tabs" id="gradeTabs"></div>
-<div id="listingsArea"><div class="empty">Hit RUN FULL SCAN<br/><span>Auctions ending in 60 min · PSA 10 · PSA 9 · BGS 9.5 · BGS 10</span></div></div>
-</div>
-</div>
-<script>
-var PROXY='https://card-scanner-proxy.onrender.com';
-var ANCHORS=['Mahomes','Tom Brady','LeBron','Curry'];
-var GRADES=[
-{id:'psa10',label:'PSA 10',grade:'PSA 10',color:'#f59e0b'},
-{id:'psa9',label:'PSA 9',grade:'PSA 9',color:'#38bdf8'},
-{id:'bgs95',label:'BGS 9.5',grade:'BGS 9.5',color:'#a78bfa'},
-{id:'bgs10',label:'BGS 10',grade:'BGS 10',color:'#4ade80'}
-];
-var clientId='',clientSecret='',activeGrade='psa10',scanData={},scanning=false,trendingPlayers=[];
+const express = require('express');
+const fetch = require('node-fetch');
+const app = express();
 
-function init(){
-var sid=localStorage.getItem('ebay_client_id');
-var ssec=localStorage.getItem('ebay_client_secret');
-if(sid&&ssec){clientId=sid;clientSecret=ssec;showScanner();}
-}
-
-function handleAuth(){
-var id=document.getElementById('clientId').value.trim();
-var sec=document.getElementById('clientSecret').value.trim();
-if(!id||!sec){document.getElementById('authError').textContent='Enter both fields';document.getElementById('authError').style.display='block';return;}
-clientId=id;clientSecret=sec;
-localStorage.setItem('ebay_client_id',id);
-localStorage.setItem('ebay_client_secret',sec);
-showScanner();
-}
-
-function showScanner(){
-document.getElementById('authPanel').style.display='none';
-document.getElementById('scannerPanel').style.display='block';
-document.getElementById('logoutBtn').style.display='block';
-buildTabs();
-renderTrending(ANCHORS);
-loadTrending();
-}
-
-function logout(){
-localStorage.removeItem('ebay_client_id');
-localStorage.removeItem('ebay_client_secret');
-clientId='';clientSecret='';
-document.getElementById('authPanel').style.display='block';
-document.getElementById('scannerPanel').style.display='none';
-document.getElementById('logoutBtn').style.display='none';
-}
-
-function loadTrending(){
-fetch(PROXY+'/trending?clientId='+encodeURIComponent(clientId)+'&clientSecret='+encodeURIComponent(clientSecret))
-.then(function(r){return r.json();})
-.then(function(d){if(d.players){trendingPlayers=d.players;renderTrending(d.players);}})
-.catch(function(){});
-}
-
-function renderTrending(players){
-var bar=document.getElementById('trendingBar');
-bar.innerHTML=players.map(function(p){
-var isAnchor=ANCHORS.indexOf(p)>=0;
-return '<span class="trend-pill'+(isAnchor?' anchor':'')+'">'+(isAnchor?'⭐ ':'')+p+'</span>';
-}).join('');
-}
-
-function buildSearchQueries(grade){
-var players=trendingPlayers.length>0?trendingPlayers:ANCHORS;
-return players.map(function(p){return p+' '+grade+' rookie';});
-}
-
-function buildTabs(){
-var t=document.getElementById('gradeTabs');t.innerHTML='';
-GRADES.forEach(function(tg){
-var b=document.createElement('button');
-b.className='grade-tab';b.id='tab-'+tg.id;
-b.onclick=function(){activeGrade=tg.id;updateTabs();renderListings();};
-t.appendChild(b);
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Headers', '*');
+  next();
 });
-updateTabs();
+
+const ANCHOR_PLAYERS = ['Mahomes', 'Tom Brady', 'LeBron James', 'Stephen Curry'];
+
+async function getTrendingPlayers(token) {
+  try {
+    const players = new Set(ANCHOR_PLAYERS);
+    const searches = [
+      'PSA 10 rookie auction hot 2025',
+      'BGS 9.5 rookie auction trending',
+      'PSA 10 rookie football basketball baseball 2024 2025'
+    ];
+    const namePattern = /\b(Mahomes|Brady|LeBron|Curry|Burrow|Herbert|Stroud|CJ Stroud|Williams|Lamar Jackson|Josh Allen|Jeanty|Harrison|Bo Nix|Daniels|Richardson|Caleb Williams|Anthony Richardson|Wembanyama|Caitlin Clark|Cooper Flagg|Boozer|Luka|Giannis|Tatum|SGA|Tyrese|Scottie|Shohei|Judge|Acuna|Soto|Trout|Bichette|Vlad Jr)\b/gi;
+    for (const q of searches) {
+      const url = `https://api.ebay.com/buy/browse/v1/item_summary/search?q=${encodeURIComponent(q)}&category_ids=261328&sort=bestMatch&limit=30`;
+      const r = await fetch(url, {
+        headers: { 'Authorization': `Bearer ${token}`, 'X-EBAY-C-MARKETPLACE-ID': 'EBAY_US' }
+      });
+      const data = await r.json();
+      (data.itemSummaries || []).forEach(item => {
+        const matches = (item.title || '').match(namePattern);
+        if (matches) matches.forEach(m => players.add(m));
+      });
+    }
+    return [...players].slice(0, 10);
+  } catch(e) {
+    return ANCHOR_PLAYERS;
+  }
 }
 
-function updateTabs(){
-GRADES.forEach(function(tg){
-var b=document.getElementById('tab-'+tg.id);if(!b)return;
-var d=scanData[tg.id]||{};
-var deals=Object.values(d.ratings||{}).filter(function(r){return r.tag==='DEAL';}).length;
-var active=activeGrade===tg.id;
-b.style.background=active?tg.color+'22':'#070d1a';
-b.style.borderColor=active?tg.color:'#1e293b';
-b.style.color=active?tg.color:'#475569';
-b.innerHTML=tg.label+(deals>0?'<span style="margin-left:6px;background:#f59e0b;color:#000;border-radius:10px;padding:1px 6px;font-size:9px;font-weight:900">'+deals+'</span>':'')+(d.loading?'<span class="spin" style="margin-left:6px">⟳</span>':'');
+async function getToken(clientId, clientSecret) {
+  const credentials = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
+  const r = await fetch('https://api.ebay.com/identity/v1/oauth2/token', {
+    method: 'POST',
+    headers: { 'Authorization': `Basic ${credentials}`, 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: 'grant_type=client_credentials&scope=https://api.ebay.com/oauth/api_scope'
+  });
+  const data = await r.json();
+  if (!data.access_token) throw new Error('Auth failed');
+  return data.access_token;
+}
+
+app.get('/scan', async (req, res) => {
+  try {
+    const { clientId, clientSecret, q, grade } = req.query;
+    const token = await getToken(clientId, clientSecret);
+    const encoded = encodeURIComponent(q);
+    const now = new Date().toISOString();
+    const twoHours = new Date(Date.now() + 7200000).toISOString();
+    const url = `https://api.ebay.com/buy/browse/v1/item_summary/search?q=${encoded}&category_ids=261328&sort=endingSoonest&limit=20&filter=buyingOptions:%7BAUCTION%7D,endTimeFrom:${now},endTimeTo:${twoHours}`;
+    const r = await fetch(url, {
+      headers: { 'Authorization': `Bearer ${token}`, 'X-EBAY-C-MARKETPLACE-ID': 'EBAY_US' }
+    });
+    const data = await r.json();
+    
+    // Filter to only exact grade matches
+    if (grade && data.itemSummaries) {
+      const gradeUpper = grade.toUpperCase();
+      data.itemSummaries = data.itemSummaries.filter(item => {
+        const title = (item.title || '').toUpperCase();
+        if (gradeUpper === 'PSA 10') return title.includes('PSA 10') && !title.includes('PSA 9') && !title.includes('BGS');
+        if (gradeUpper === 'PSA 9') return title.includes('PSA 9') && !title.includes('PSA 10') && !title.includes('BGS');
+        if (gradeUpper === 'BGS 9.5') return title.includes('BGS 9.5');
+        if (gradeUpper === 'BGS 10') return title.includes('BGS 10') && !title.includes('BGS 9.5');
+        return true;
+      });
+    }
+    res.json(data);
+  } catch(e) {
+    res.json({ error: e.message });
+  }
 });
-var total=Object.values(scanData).reduce(function(s,d){return s+Object.values(d.ratings||{}).filter(function(r){return r.tag==='DEAL';}).length;},0);
-document.getElementById('dealCount').textContent=total;
-document.getElementById('dealBadge').style.display=total>0?'block':'none';
-}
 
-function formatPrice(item){
-var price=item.currentBidPrice||item.price;
-if(!price)return'$—';
-return'$'+parseFloat(price.value).toFixed(2);
-}
-
-function formatEndTime(item){
-if(!item.itemEndDate)return'';
-var end=new Date(item.itemEndDate);
-var mins=Math.round((end-Date.now())/60000);
-if(mins<1)return'< 1 min left';
-if(mins<60)return mins+'m left';
-return Math.round(mins/60)+'h left';
-}
-
-function renderListings(){
-var area=document.getElementById('listingsArea');
-var d=scanData[activeGrade]||{};
-var tg=GRADES.find(function(t){return t.id===activeGrade;});
-if(!d.listings&&!d.loading){area.innerHTML='<div class="empty">Hit RUN FULL SCAN<br/><span>Auctions ending in 60 min · PSA 10 · PSA 9 · BGS 9.5 · BGS 10</span></div>';return;}
-if(d.loading){area.innerHTML='<div class="loading"><span class="spin">⟳</span><br/>'+(d.status||'Scanning...')+'</div>';return;}
-if(d.error){area.innerHTML='<div class="err">'+d.error+'</div>';return;}
-if(d.aiLoading){area.innerHTML='<div class="ai-loading" style="border-left:3px solid '+tg.color+'">● AI analyzing '+d.listings.length+' listings...</div>';return;}
-if(!d.listings||!d.listings.length){area.innerHTML='<div class="empty"><span>No auctions ending soon for this grade.<br/>Try again in a few minutes.</span></div>';return;}
-area.innerHTML=d.listings.map(function(item,i){
-var rating=d.ratings?d.ratings[i+1]:null;
-var priceStr=formatPrice(item);
-var timeLeft=formatEndTime(item);
-var img=item.image?item.image.imageUrl:'';
-var tagClass=rating?(rating.tag==='DEAL'?'deal':rating.tag==='PASS'?'pass':'fair'):'fair';
-var tagLabel=rating?(rating.tag==='DEAL'?'🔥 DEAL':rating.tag==='PASS'?'⚠️ PASS':'✅ FAIR'):'';
-return '<div class="listing-card">'+(img?'<img class="listing-img" src="'+img+'" alt=""/>':'')+'<div class="listing-body"><div class="tags">'+(rating?'<span class="tag '+tagClass+'">'+tagLabel+'</span>':'')+'<span class="tag auction">AUCTION</span>'+(timeLeft?'<span class="tag ending">⏱ '+timeLeft+'</span>':'')+'</div><div class="title">'+(item.title||'')+'</div>'+(rating&&rating.text?'<div class="ai-text">'+rating.text+'</div>':'')+'<div class="footer"><div><div class="price">'+priceStr+'</div><div class="price-sub">current bid</div></div><a class="view-link" href="'+item.itemWebUrl+'" target="_blank">BID →</a></div></div></div>';
-}).join('');
-}
-
-function parseRatings(t){
-var m={};
-t.split('\n').filter(function(l){return l.match(/^\d+\./);}).forEach(function(line){
-var n=parseInt((line.match(/^(\d+)\./)||[])[1]);if(!n)return;
-m[n]={tag:/DEAL|🔥/.test(line)?'DEAL':/PASS|⚠️/.test(line)?'PASS':'FAIR',text:line.replace(/^\d+\.\s*/,'').replace(/\[.*?\]\s*/,'')};
+app.get('/trending', async (req, res) => {
+  try {
+    const { clientId, clientSecret } = req.query;
+    const token = await getToken(clientId, clientSecret);
+    const players = await getTrendingPlayers(token);
+    res.json({ players });
+  } catch(e) {
+    res.json({ players: ANCHOR_PLAYERS });
+  }
 });
-return m;
-}
 
-function fetchWithRetry(url,retries,delay){
-retries=retries||4;delay=delay||5000;
-return new Promise(function(resolve,reject){
-function attempt(n){
-var controller=new AbortController();
-var timeout=setTimeout(function(){controller.abort();},55000);
-fetch(url,{signal:controller.signal})
-.then(function(r){clearTimeout(timeout);return r.json();})
-.then(resolve)
-.catch(function(e){clearTimeout(timeout);if(n<=1){reject(e);}else{setTimeout(function(){attempt(n-1);},delay);}});
-}
-attempt(retries);
+app.get('/token', async (req, res) => {
+  try {
+    const { clientId, clientSecret } = req.query;
+    const token = await getToken(clientId, clientSecret);
+    res.json({ access_token: token });
+  } catch(e) {
+    res.json({ error: e.message });
+  }
 });
-}
 
-function runFullScan(){
-if(!clientId||!clientSecret||scanning)return;
-scanning=true;
-var btn=document.getElementById('scanBtn');
-btn.disabled=true;btn.textContent='⟳ SCANNING...';
-document.getElementById('lastScan').textContent='Last: '+new Date().toLocaleTimeString();
-var players=trendingPlayers.length>0?trendingPlayers:ANCHORS;
-var i=0;
-function nextGrade(){
-if(i>=GRADES.length){scanning=false;btn.disabled=false;btn.textContent='⚡ RUN FULL SCAN';return;}
-var tg=GRADES[i];i++;
-scanData[tg.id]={loading:true,listings:[],ratings:{},aiLoading:false,error:null,status:'Scanning for '+tg.grade+' auctions ending soon...'};
-updateTabs();if(activeGrade===tg.id)renderListings();
-var allListings=[];
-var playersDone=0;
-players.forEach(function(player){
-var q=player+' '+tg.grade+' rookie -reprint -lot -custom';
-var url=PROXY+'/scan?clientId='+encodeURIComponent(clientId)+'&clientSecret='+encodeURIComponent(clientSecret)+'&q='+encodeURIComponent(q);
-fetchWithRetry(url,2,3000).then(function(data){
-var items=data.itemSummaries||[];
-allListings=allListings.concat(items);
-}).catch(function(){}).finally(function(){
-playersDone++;
-if(playersDone>=players.length){
-var seen={};
-var unique=allListings.filter(function(item){if(seen[item.itemId])return false;seen[item.itemId]=true;return true;});
-unique.sort(function(a,b){
-var ta=a.itemEndDate?new Date(a.itemEndDate).getTime():9999999999999;
-var tb=b.itemEndDate?new Date(b.itemEndDate).getTime():9999999999999;
-return ta-tb;
+app.listen(process.env.PORT || 3000, () => {
+  console.log('Card scanner proxy running');
 });
-var listings=unique.slice(0,20);
-scanData[tg.id]={loading:false,listings:listings,ratings:{},aiLoading:listings.length>0,error:null};
-updateTabs();if(activeGrade===tg.id)renderListings();
-if(listings.length>0){
-var itemList=listings.slice(0,8).map(function(item,idx){
-var price=formatPrice(item);
-var time=formatEndTime(item);
-return (idx+1)+'. '+price+' · '+(time||'ending soon')+' · '+(item.title||'').slice(0,70);
-}).join('\n');
-fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:'Expert sports card reseller. These are live eBay auctions ending within 60 minutes for '+tg.grade+' rookie cards.\n\n'+itemList+'\n\nFor each number, should I bid? Format:\n1. [DEAL🔥/FAIR✅/PASS⚠️] One sentence — estimated market value and whether current bid is under/at/over value.\n\nBe direct. I need to decide fast.'}]})})
-.then(function(r){return r.json();})
-.then(function(ad){
-scanData[tg.id]={loading:false,listings:listings,ratings:parseRatings((ad.content&&ad.content[0])?ad.content[0].text:''),aiLoading:false,error:null};
-updateTabs();if(activeGrade===tg.id)renderListings();nextGrade();
-}).catch(function(){
-scanData[tg.id].aiLoading=false;updateTabs();if(activeGrade===tg.id)renderListings();nextGrade();
-});
-}else{nextGrade();}
-}
-});
-});
-}
-nextGrade();
-}
-
-window.onload=init;
-</script>
-</body>
-</html>
