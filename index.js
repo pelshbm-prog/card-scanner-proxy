@@ -123,6 +123,16 @@ function filterByGrade(items, grade) {
   });
 }
 
+function removeZeroBidAuctions(items) {
+  return items.filter(item => {
+    const isAuction = (item.buyingOptions || []).includes('AUCTION');
+    if (!isAuction) return true;
+    const bid = item.currentBidPrice || item.price;
+    const bidVal = bid ? parseFloat(bid.value) : 0;
+    return bidVal > 0;
+  });
+}
+
 app.get('/scan', async (req, res) => {
   try {
     const { clientId, clientSecret, grade } = req.query;
@@ -133,6 +143,7 @@ app.get('/scan', async (req, res) => {
       searchCards(token, grade, 'FIXED_PRICE')
     ]);
 
+    // Combine and dedupe
     const seen = {};
     const all = [...auctionItems, ...fixedItems].filter(item => {
       if (seen[item.itemId]) return false;
@@ -140,9 +151,14 @@ app.get('/scan', async (req, res) => {
       return true;
     });
 
-    const filtered = filterByGrade(all, grade || 'PSA 10');
+    // Filter to exact grade
+    const gradeFiltered = filterByGrade(all, grade || 'PSA 10');
 
-    filtered.sort((a, b) => {
+    // Remove zero bid auctions
+    const withBids = removeZeroBidAuctions(gradeFiltered);
+
+    // Sort auctions ending soonest first then fixed price
+    withBids.sort((a, b) => {
       const aIsAuction = (a.buyingOptions || []).includes('AUCTION');
       const bIsAuction = (b.buyingOptions || []).includes('AUCTION');
       if (aIsAuction && !bIsAuction) return -1;
@@ -155,8 +171,9 @@ app.get('/scan', async (req, res) => {
       return 0;
     });
 
-    const top = filtered.slice(0, 30);
+    const top = withBids.slice(0, 30);
 
+    // Get sold comps for each card
     const batchSize = 10;
     for (let i = 0; i < top.length; i += batchSize) {
       const batch = top.slice(i, i + batchSize);
