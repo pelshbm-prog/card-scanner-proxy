@@ -29,25 +29,30 @@ input{background:#070d1a;border:1px solid #1e293b;border-radius:8px;color:#e2e8f
 .trend-pill.anchor{border-color:#f59e0b44;color:#f59e0b;background:#f59e0b11}
 .grade-tabs{display:flex;gap:6px;margin-bottom:16px;overflow-x:auto;padding-bottom:4px}
 .grade-tab{background:#070d1a;border:1px solid #1e293b;border-radius:10px;color:#475569;font-family:'Share Tech Mono',monospace;font-size:11px;font-weight:700;letter-spacing:1px;padding:8px 14px;cursor:pointer;white-space:nowrap}
-.listing-card{background:linear-gradient(135deg,#0a0f1e,#0f172a);border:1px solid #1e293b;border-radius:10px;padding:12px;display:flex;gap:12px;margin-bottom:8px;transition:border-color 0.2s}
-.listing-card.is-deal{border-color:#f59e0b66}
-.listing-img{width:54px;height:74px;object-fit:contain;border-radius:4px;flex-shrink:0;background:#1e293b}
-.listing-body{flex:1;min-width:0}
-.tags{display:flex;gap:6px;margin-bottom:5px;flex-wrap:wrap}
-.tag{border-radius:4px;padding:2px 8px;font-size:10px;letter-spacing:1px;font-weight:700}
+.listing-card{background:linear-gradient(135deg,#0a0f1e,#0f172a);border:1px solid #1e293b;border-radius:12px;padding:14px;margin-bottom:10px;transition:border-color 0.2s}
+.listing-card.is-deal{border-color:#f59e0b88;background:linear-gradient(135deg,#0f0d00,#131200)}
+.card-top{display:flex;gap:12px;align-items:flex-start;margin-bottom:10px}
+.listing-img{width:60px;height:82px;object-fit:contain;border-radius:6px;flex-shrink:0;background:#1e293b}
+.card-info{flex:1;min-width:0}
+.tags{display:flex;gap:5px;margin-bottom:6px;flex-wrap:wrap}
+.tag{border-radius:4px;padding:2px 7px;font-size:9px;letter-spacing:1px;font-weight:700}
 .deal{background:#f59e0b22;color:#f59e0b;border:1px solid #f59e0b44}
 .fair{background:#38bdf822;color:#38bdf8;border:1px solid #38bdf844}
 .pass{background:#f8717122;color:#f87171;border:1px solid #f8717144}
-.auction{background:#a78bfa22;color:#a78bfa;border:1px solid #a78bfa44;font-size:9px}
-.ending{background:#ef444422;color:#ef4444;border:1px solid #ef444444;font-size:9px}
+.auction-tag{background:#a78bfa22;color:#a78bfa;border:1px solid #a78bfa44}
+.ending{background:#ef444422;color:#ef4444;border:1px solid #ef444444}
 .ending.urgent{background:#ef4444;color:#fff;animation:pulse 1s infinite}
-.title{font-size:12px;color:#cbd5e1;line-height:1.4;margin-bottom:6px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
-.ai-text{font-size:11px;color:#94a3b8;margin-bottom:6px;line-height:1.5;background:#ffffff08;border-radius:6px;padding:6px 8px}
-.footer{display:flex;justify-content:space-between;align-items:center}
-.price{font-family:'Orbitron',monospace;font-size:18px;font-weight:700;color:#f59e0b}
-.price-sub{font-size:9px;color:#475569;margin-top:1px}
-.bid-btn{background:linear-gradient(135deg,#b45309,#f59e0b);color:#000;border:none;border-radius:6px;padding:6px 14px;font-size:11px;font-family:'Orbitron',monospace;font-weight:700;cursor:pointer;text-decoration:none;letter-spacing:1px}
-.bid-btn.urgent{animation:pulse 1s infinite}
+.card-title{font-size:12px;color:#cbd5e1;line-height:1.4;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.metrics-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:10px}
+.metric{background:#070d1a;border:1px solid #1e293b;border-radius:8px;padding:8px;text-align:center}
+.metric-label{font-size:8px;color:#475569;letter-spacing:1px;margin-bottom:3px}
+.metric-value{font-family:'Orbitron',monospace;font-size:14px;font-weight:700;color:#e2e8f0}
+.metric-value.green{color:#4ade80}
+.metric-value.red{color:#f87171}
+.metric-value.gold{color:#f59e0b}
+.ai-text{font-size:11px;color:#94a3b8;margin-bottom:10px;line-height:1.5;background:#ffffff06;border-radius:6px;padding:8px}
+.bid-btn{display:block;width:100%;background:linear-gradient(135deg,#b45309,#f59e0b);color:#000;border:none;border-radius:8px;padding:10px;font-size:13px;font-family:'Orbitron',monospace;font-weight:700;cursor:pointer;text-decoration:none;text-align:center;letter-spacing:2px}
+.bid-btn.urgent{animation:pulse 0.8s infinite;background:linear-gradient(135deg,#dc2626,#ef4444);color:#fff}
 .empty{text-align:center;padding:60px 20px;color:#1e293b;font-size:13px}
 .empty span{color:#334155}
 .loading{text-align:center;padding:30px;color:#334155;font-size:12px;line-height:2}
@@ -57,7 +62,7 @@ input{background:#070d1a;border:1px solid #1e293b;border-radius:8px;color:#e2e8f
 .logout{background:#1e293b;color:#64748b;border:1px solid #334155;border-radius:6px;padding:4px 10px;font-size:10px;font-family:'Share Tech Mono',monospace;cursor:pointer;letter-spacing:1px}
 .section-label{font-size:9px;color:#334155;letter-spacing:2px;margin-bottom:8px}
 @keyframes spin{to{transform:rotate(360deg)}}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.6}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}
 .spin{display:inline-block;animation:spin 1s linear infinite}
 </style>
 </head>
@@ -87,7 +92,7 @@ input{background:#070d1a;border:1px solid #1e293b;border-radius:8px;color:#e2e8f
 <div id="scannerPanel" style="display:none">
 <button class="btn btn-scan" id="scanBtn" onclick="runFullScan()">⚡ RUN FULL SCAN</button>
 <div class="section-label">SCANNING TARGETS</div>
-<div class="trending-bar" id="trendingBar"><span class="trend-pill">Loading trending players...</span></div>
+<div class="trending-bar" id="trendingBar"><span class="trend-pill">Loading players...</span></div>
 <div class="grade-tabs" id="gradeTabs"></div>
 <div id="listingsArea"><div class="empty">Hit RUN FULL SCAN<br/><span>Auctions ending in 2 hours · sorted by ending soonest</span></div></div>
 </div>
@@ -139,9 +144,8 @@ document.getElementById('logoutBtn').style.display='none';
 function loadTrending(){
 fetch(PROXY+'/trending?clientId='+encodeURIComponent(clientId)+'&clientSecret='+encodeURIComponent(clientSecret))
 .then(function(r){return r.json();})
-.then(function(d){
-if(d.players){trendingPlayers=d.players;renderTrending(d.players);}
-}).catch(function(){trendingPlayers=ANCHORS;renderTrending(ANCHORS);});
+.then(function(d){if(d.players){trendingPlayers=d.players;renderTrending(d.players);}})
+.catch(function(){trendingPlayers=ANCHORS;renderTrending(ANCHORS);});
 }
 
 function renderTrending(players){
@@ -179,70 +183,112 @@ document.getElementById('dealCount').textContent=total;
 document.getElementById('dealBadge').style.display=total>0?'block':'none';
 }
 
-function formatPrice(item){
-var price=item.currentBidPrice||item.price;
-if(!price||!price.value||parseFloat(price.value)===0)return null;
-return '$'+parseFloat(price.value).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+function getCurrentBid(item){
+var p=item.currentBidPrice||item.price;
+if(!p||!p.value)return null;
+var v=parseFloat(p.value);
+return v>0?v:null;
+}
+
+function formatPrice(val){
+if(!val)return'—';
+return'$'+val.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
 }
 
 function formatEndTime(item){
 if(!item.itemEndDate)return null;
-var end=new Date(item.itemEndDate);
-var ms=end-Date.now();
+var ms=new Date(item.itemEndDate)-Date.now();
 if(ms<0)return'ended';
 var mins=Math.round(ms/60000);
-if(mins<1)return'< 1 min';
-if(mins<60)return mins+'m left';
-var hrs=Math.floor(mins/60);
-var rem=mins%60;
-return hrs+'h '+(rem>0?rem+'m ':'')+' left';
+if(mins<1)return'<1m';
+if(mins<60)return mins+'m';
+var h=Math.floor(mins/60),m=mins%60;
+return h+'h'+(m>0?' '+m+'m':'');
+}
+
+function parseAIData(text){
+var results={};
+var lines=text.split('\n').filter(function(l){return l.match(/^\d+\./);});
+lines.forEach(function(line){
+var n=parseInt((line.match(/^(\d+)\./)||[])[1]);
+if(!n)return;
+var tag=/DEAL|🔥/.test(line)?'DEAL':/PASS|⚠️/.test(line)?'PASS':'FAIR';
+var marketMatch=line.match(/\$(\d[\d,]*)\s*[-–]\s*\$(\d[\d,]*)/);
+var singleMatch=line.match(/\$(\d[\d,]+)/);
+var marketLow=null,marketHigh=null,marketMid=null;
+if(marketMatch){
+marketLow=parseFloat(marketMatch[1].replace(/,/g,''));
+marketHigh=parseFloat(marketMatch[2].replace(/,/g,''));
+marketMid=(marketLow+marketHigh)/2;
+}else if(singleMatch){
+marketMid=parseFloat(singleMatch[1].replace(/,/g,''));
+}
+var cleanText=line.replace(/^\d+\.\s*/,'').replace(/\[.*?\]\s*/,'');
+results[n]={tag:tag,marketMid:marketMid,marketLow:marketLow,marketHigh:marketHigh,text:cleanText};
+});
+return results;
 }
 
 function renderListings(){
 var area=document.getElementById('listingsArea');
 var d=scanData[activeGrade]||{};
 var tg=GRADES.find(function(t){return t.id===activeGrade;});
-if(!d.listings&&!d.loading){area.innerHTML='<div class="empty">Hit RUN FULL SCAN<br/><span>Auctions ending in 2 hours · sorted soonest first</span></div>';return;}
+if(!d.listings&&!d.loading){area.innerHTML='<div class="empty">Hit RUN FULL SCAN<br/><span>Auctions ending in 2 hours · sorted soonest</span></div>';return;}
 if(d.loading){area.innerHTML='<div class="loading"><span class="spin">⟳</span><br/>'+(d.status||'Scanning...')+'</div>';return;}
 if(d.error){area.innerHTML='<div class="err">'+d.error+'</div>';return;}
-if(d.aiLoading){area.innerHTML='<div class="ai-loading" style="border-left:3px solid '+tg.color+'">● AI rating '+d.listings.length+' listings — deciding what to bid on...</div>';return;}
-if(!d.listings||!d.listings.length){area.innerHTML='<div class="empty"><span>No auctions ending soon for this grade.<br/>Try again in a few minutes.</span></div>';return;}
+if(d.aiLoading){area.innerHTML='<div class="ai-loading" style="border-left:3px solid '+tg.color+'">● AI analyzing '+d.listings.length+' listings — calculating value gaps...</div>';return;}
+if(!d.listings||!d.listings.length){area.innerHTML='<div class="empty"><span>No auctions ending soon.<br/>Try again in a few minutes.</span></div>';return;}
+
 area.innerHTML=d.listings.map(function(item,i){
 var rating=d.ratings?d.ratings[i+1]:null;
-var priceStr=formatPrice(item);
+var currentBid=getCurrentBid(item);
 var timeLeft=formatEndTime(item);
 var img=item.image?item.image.imageUrl:'';
-var isUrgent=timeLeft&&timeLeft.indexOf('m left')>=0&&parseInt(timeLeft)<30;
+var isUrgent=timeLeft&&(timeLeft.indexOf('m')==timeLeft.length-1)&&parseInt(timeLeft)<=30;
 var isDeal=rating&&rating.tag==='DEAL';
-var tagClass=rating?(rating.tag==='DEAL'?'deal':rating.tag==='PASS'?'pass':'fair'):'';
-var tagLabel=rating?(rating.tag==='DEAL'?'🔥 DEAL':rating.tag==='PASS'?'⚠️ PASS':'✅ FAIR'):'';
-return '<div class="listing-card'+(isDeal?' is-deal':'')+'">'
-+(img?'<img class="listing-img" src="'+img+'" alt=""/>':'')
-+'<div class="listing-body">'
-+'<div class="tags">'
-+(rating?'<span class="tag '+tagClass+'">'+tagLabel+'</span>':'')
-+'<span class="tag auction">AUCTION</span>'
-+(timeLeft?'<span class="tag ending'+(isUrgent?' urgent':'')+'">'+(isUrgent?'🔥 ':' ⏱ ')+timeLeft+'</span>':'')
-+'</div>'
-+'<div class="title">'+(item.title||'')+'</div>'
-+(rating&&rating.text?'<div class="ai-text">'+rating.text+'</div>':'')
-+'<div class="footer">'
-+'<div>'
-+(priceStr?'<div class="price">'+priceStr+'</div><div class="price-sub">current bid</div>':'<div class="price" style="color:#475569">$0 start</div><div class="price-sub">no bids yet</div>')
-+'</div>'
-+'<a class="bid-btn'+(isUrgent?' urgent':'')+'" href="'+(item.itemWebUrl||'#')+'" target="_blank">'+(isUrgent?'⚡ BID NOW':'BID →')+'</a>'
-+'</div>'
-+'</div></div>';
-}).join('');
+
+// Calculate % difference
+var pctHtml='—';
+var pctClass='';
+if(currentBid&&rating&&rating.marketMid){
+var pct=Math.round(((currentBid-rating.marketMid)/rating.marketMid)*100);
+if(pct<0){
+pctClass='green';
+pctHtml=pct+'%';
+}else if(pct===0){
+pctClass='';
+pctHtml='AT MKT';
+}else{
+pctClass='red';
+pctHtml='+'+pct+'%';
+}
 }
 
-function parseRatings(t){
-var m={};
-t.split('\n').filter(function(l){return l.match(/^\d+\./);}).forEach(function(line){
-var n=parseInt((line.match(/^(\d+)\./)||[])[1]);if(!n)return;
-m[n]={tag:/DEAL|🔥/.test(line)?'DEAL':/PASS|⚠️/.test(line)?'PASS':'FAIR',text:line.replace(/^\d+\.\s*/,'').replace(/\[.*?\]\s*/,'')};
-});
-return m;
+var tagClass=rating?(rating.tag==='DEAL'?'deal':rating.tag==='PASS'?'pass':'fair'):'';
+var tagLabel=rating?(rating.tag==='DEAL'?'🔥 DEAL':rating.tag==='PASS'?'⚠️ PASS':'✅ FAIR'):'';
+var marketStr=rating&&rating.marketLow&&rating.marketHigh?formatPrice(rating.marketLow)+' – '+formatPrice(rating.marketHigh):rating&&rating.marketMid?'~'+formatPrice(rating.marketMid):'—';
+
+return '<div class="listing-card'+(isDeal?' is-deal':'')+'">'
++'<div class="card-top">'
++(img?'<img class="listing-img" src="'+img+'" alt=""/>':'')
++'<div class="card-info">'
++'<div class="tags">'
++(rating&&tagLabel?'<span class="tag '+tagClass+'">'+tagLabel+'</span>':'')
++'<span class="tag auction-tag">AUCTION</span>'
++(timeLeft?'<span class="tag ending'+(isUrgent?' urgent':'')+'">⏱ '+timeLeft+'</span>':'')
++'</div>'
++'<div class="card-title">'+(item.title||'')+'</div>'
++'</div>'
++'</div>'
++'<div class="metrics-row">'
++'<div class="metric"><div class="metric-label">CURRENT BID</div><div class="metric-value gold">'+(currentBid?formatPrice(currentBid):'No bids')+'</div></div>'
++'<div class="metric"><div class="metric-label">AI MARKET VALUE</div><div class="metric-value" style="font-size:11px">'+marketStr+'</div></div>'
++'<div class="metric"><div class="metric-label">VS MARKET</div><div class="metric-value '+pctClass+'" style="font-size:16px">'+pctHtml+'</div></div>'
++'</div>'
++(rating&&rating.text?'<div class="ai-text">'+rating.text+'</div>':'')
++'<a class="bid-btn'+(isUrgent?' urgent':'')+'" href="'+(item.itemWebUrl||'#')+'" target="_blank">'+(isUrgent?'⚡ BID NOW — ENDING SOON':'BID ON EBAY →')+'</a>'
++'</div>';
+}).join('');
 }
 
 function fetchWithRetry(url,retries,delay){
@@ -250,11 +296,11 @@ retries=retries||3;delay=delay||4000;
 return new Promise(function(resolve,reject){
 function attempt(n){
 var controller=new AbortController();
-var timeout=setTimeout(function(){controller.abort();},55000);
+var t=setTimeout(function(){controller.abort();},55000);
 fetch(url,{signal:controller.signal})
-.then(function(r){clearTimeout(timeout);return r.json();})
+.then(function(r){clearTimeout(t);return r.json();})
 .then(resolve)
-.catch(function(e){clearTimeout(timeout);if(n<=1){reject(e);}else{setTimeout(function(){attempt(n-1);},delay);}});
+.catch(function(e){clearTimeout(t);if(n<=1)reject(e);else setTimeout(function(){attempt(n-1);},delay);});
 }
 attempt(retries);
 });
@@ -267,34 +313,24 @@ var btn=document.getElementById('scanBtn');
 btn.disabled=true;btn.textContent='⟳ SCANNING...';
 document.getElementById('lastScan').textContent='Last: '+new Date().toLocaleTimeString();
 var players=trendingPlayers.length>0?trendingPlayers:ANCHORS;
-var gradeIndex=0;
+var gi=0;
 
 function nextGrade(){
-if(gradeIndex>=GRADES.length){
-scanning=false;btn.disabled=false;btn.textContent='⚡ RUN FULL SCAN';
-return;
-}
-var tg=GRADES[gradeIndex];gradeIndex++;
-scanData[tg.id]={loading:true,listings:[],ratings:{},aiLoading:false,error:null,status:'Searching '+players.length+' players for '+tg.grade+' auctions...'};
+if(gi>=GRADES.length){scanning=false;btn.disabled=false;btn.textContent='⚡ RUN FULL SCAN';return;}
+var tg=GRADES[gi];gi++;
+scanData[tg.id]={loading:true,listings:[],ratings:{},aiLoading:false,error:null,status:'Searching '+players.length+' players for '+tg.grade+'...'};
 updateTabs();if(activeGrade===tg.id)renderListings();
-
-var allListings=[];
-var done=0;
-
+var all=[],done=0;
 players.forEach(function(player){
 var q=player+' rookie -reprint -lot -custom';
 var url=PROXY+'/scan?clientId='+encodeURIComponent(clientId)+'&clientSecret='+encodeURIComponent(clientSecret)+'&q='+encodeURIComponent(q)+'&grade='+encodeURIComponent(tg.grade);
 fetchWithRetry(url,2,3000).then(function(data){
-(data.itemSummaries||[]).forEach(function(item){allListings.push(item);});
+(data.itemSummaries||[]).forEach(function(it){all.push(it);});
 }).catch(function(){}).finally(function(){
 done++;
-if(done>=players.length){
-// Dedupe and sort by ending soonest
+if(done<players.length)return;
 var seen={};
-var unique=allListings.filter(function(item){
-if(seen[item.itemId])return false;
-seen[item.itemId]=true;return true;
-});
+var unique=all.filter(function(it){if(seen[it.itemId])return false;seen[it.itemId]=true;return true;});
 unique.sort(function(a,b){
 var ta=a.itemEndDate?new Date(a.itemEndDate).getTime():9999999999999;
 var tb=b.itemEndDate?new Date(b.itemEndDate).getTime():9999999999999;
@@ -309,32 +345,25 @@ nextGrade();return;
 scanData[tg.id]={loading:false,listings:listings,ratings:{},aiLoading:true,error:null};
 updateTabs();if(activeGrade===tg.id)renderListings();
 
-var itemList=listings.slice(0,8).map(function(item,idx){
-var price=formatPrice(item)||'$0 (no bids)';
-var time=formatEndTime(item)||'ending soon';
-return (idx+1)+'. '+price+' · '+time+' · '+(item.title||'').slice(0,70);
+var itemList=listings.slice(0,8).map(function(it,idx){
+var bid=getCurrentBid(it);
+var time=formatEndTime(it)||'ending soon';
+return (idx+1)+'. Current bid: '+(bid?formatPrice(bid):'no bids')+' · '+time+' · '+(it.title||'').slice(0,70);
 }).join('\n');
 
 fetch('https://api.anthropic.com/v1/messages',{
-method:'POST',
-headers:{'Content-Type':'application/json'},
-body:JSON.stringify({
-model:'claude-sonnet-4-20250514',
-max_tokens:1000,
-messages:[{role:'user',content:'You are an expert sports card reseller. These are live eBay auctions ending within 2 hours for '+tg.grade+' rookie cards. I need to decide RIGHT NOW whether to bid.\n\n'+itemList+'\n\nFor each number:\n1. [DEAL🔥/FAIR✅/PASS⚠️] Estimated market value $X-$Y. Current bid is [under/at/over] value. [Bid/Skip].\n\nBe fast and direct.'}]
-})
+method:'POST',headers:{'Content-Type':'application/json'},
+body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1200,
+messages:[{role:'user',content:'You are an expert sports card reseller. These are live eBay auctions ending within 2 hours for '+tg.grade+' rookie cards. For each one give me the market value range and whether to bid.\n\n'+itemList+'\n\nFor each number respond EXACTLY like this:\n1. [DEAL🔥/FAIR✅/PASS⚠️] Market value $X-$Y. Current bid is X% below/above/at market. One sentence action.\n\nInclude the dollar range on every single item so I can calculate the gap. Be fast and direct.'}]})
 }).then(function(r){return r.json();})
 .then(function(ad){
 var text=(ad.content&&ad.content[0])?ad.content[0].text:'';
-scanData[tg.id]={loading:false,listings:listings,ratings:parseRatings(text),aiLoading:false,error:null};
+scanData[tg.id]={loading:false,listings:listings,ratings:parseAIData(text),aiLoading:false,error:null};
 updateTabs();if(activeGrade===tg.id)renderListings();
 nextGrade();
 }).catch(function(){
-scanData[tg.id].aiLoading=false;
-updateTabs();if(activeGrade===tg.id)renderListings();
-nextGrade();
+scanData[tg.id].aiLoading=false;updateTabs();if(activeGrade===tg.id)renderListings();nextGrade();
 });
-}
 });
 });
 }
