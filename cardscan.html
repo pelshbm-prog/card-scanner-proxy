@@ -56,7 +56,6 @@ input{background:#070d1a;border:1px solid #1e293b;border-radius:8px;color:#e2e8f
 .empty{text-align:center;padding:60px 20px;color:#1e293b;font-size:13px}
 .empty span{color:#334155}
 .loading{text-align:center;padding:30px;color:#334155;font-size:12px;line-height:2}
-.ai-loading{background:#0f172a;border:1px solid #1e293b;border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:11px;color:#64748b}
 .err{padding:16px;background:#1c0a0a;border:1px solid #f8717133;border-radius:8px;font-size:12px;color:#f87171}
 .deal-badge{background:#f59e0b22;border:1px solid #f59e0b44;border-radius:8px;padding:6px 12px;font-family:'Orbitron',monospace;font-size:14px;color:#f59e0b;font-weight:700;display:none}
 .logout{background:#1e293b;color:#64748b;border:1px solid #334155;border-radius:6px;padding:4px 10px;font-size:10px;font-family:'Share Tech Mono',monospace;cursor:pointer;letter-spacing:1px}
@@ -106,6 +105,75 @@ var GRADES=[
 {id:'bgs95',label:'BGS 9.5',grade:'BGS 9.5',color:'#a78bfa'},
 {id:'bgs10',label:'BGS 10',grade:'BGS 10',color:'#4ade80'}
 ];
+
+// Hardcoded market values — [low, high] per grade
+var MARKET_VALUES = {
+  'psa10': [
+    {keywords:['mahomes','donruss','2017'],low:800,high:1100},
+    {keywords:['mahomes','prizm','2017'],low:2500,high:3500},
+    {keywords:['mahomes','contenders','2017'],low:600,high:900},
+    {keywords:['mahomes','topps','2017'],low:300,high:500},
+    {keywords:['brady','bowman','2000'],low:10000,high:15000},
+    {keywords:['brady','topps','2000'],low:800,high:1200},
+    {keywords:['brady','playoff','contenders','2000'],low:3000,high:5000},
+    {keywords:['lebron','topps','2003'],low:3500,high:5000},
+    {keywords:['lebron','chrome','2003'],low:8000,high:12000},
+    {keywords:['lebron','exquisite','2003'],low:50000,high:80000},
+    {keywords:['curry','topps','2009'],low:400,high:600},
+    {keywords:['curry','prizm','2012'],low:800,high:1200},
+    {keywords:['curry','chrome','2009'],low:1500,high:2500},
+    {keywords:['burrow','prizm','2020'],low:200,high:350},
+    {keywords:['burrow','donruss','2020'],low:100,high:180},
+    {keywords:['herbert','prizm','2020'],low:150,high:250},
+    {keywords:['wembanyama','prizm','2023'],low:300,high:500},
+    {keywords:['wembanyama','topps','2023'],low:150,high:280},
+    {keywords:['luka','prizm','2018'],low:500,high:800},
+    {keywords:['judge','topps','2017'],low:200,high:350},
+    {keywords:['shohei','topps','2018'],low:300,high:500},
+    {keywords:['jeanty','donruss','2025'],low:30,high:60},
+    {keywords:['jeanty','prizm','2025'],low:50,high:100},
+    {keywords:['flagg','2025'],low:100,high:200}
+  ],
+  'psa9': [
+    {keywords:['mahomes','donruss','2017'],low:300,high:500},
+    {keywords:['mahomes','prizm','2017'],low:800,high:1200},
+    {keywords:['brady','bowman','2000'],low:3000,high:5000},
+    {keywords:['lebron','topps','2003'],low:1000,high:1800},
+    {keywords:['curry','topps','2009'],low:150,high:250},
+    {keywords:['burrow','prizm','2020'],low:80,high:140},
+    {keywords:['wembanyama','prizm','2023'],low:100,high:180},
+    {keywords:['luka','prizm','2018'],low:180,high:300}
+  ],
+  'bgs95': [
+    {keywords:['mahomes','donruss','2017'],low:500,high:750},
+    {keywords:['mahomes','prizm','2017'],low:1500,high:2200},
+    {keywords:['brady','bowman','2000'],low:6000,high:9000},
+    {keywords:['lebron','topps','2003'],low:2000,high:3500},
+    {keywords:['curry','topps','2009'],low:250,high:400},
+    {keywords:['burrow','prizm','2020'],low:120,high:200},
+    {keywords:['wembanyama','prizm','2023'],low:180,high:300}
+  ],
+  'bgs10': [
+    {keywords:['mahomes','donruss','2017'],low:2000,high:3500},
+    {keywords:['mahomes','prizm','2017'],low:6000,high:10000},
+    {keywords:['brady','bowman','2000'],low:25000,high:40000},
+    {keywords:['lebron','topps','2003'],low:10000,high:18000},
+    {keywords:['curry','topps','2009'],low:1000,high:1800},
+    {keywords:['burrow','prizm','2020'],low:400,high:700}
+  ]
+};
+
+function getMarketValue(title, gradeId) {
+  var t = title.toLowerCase();
+  var values = MARKET_VALUES[gradeId] || MARKET_VALUES['psa10'];
+  for (var i = 0; i < values.length; i++) {
+    var entry = values[i];
+    var allMatch = entry.keywords.every(function(kw) { return t.indexOf(kw) >= 0; });
+    if (allMatch) return {low: entry.low, high: entry.high, mid: (entry.low + entry.high) / 2};
+  }
+  return null;
+}
+
 var clientId='',clientSecret='',activeGrade='psa10',scanData={},scanning=false,trendingPlayers=[];
 
 function init(){
@@ -206,29 +274,31 @@ var h=Math.floor(mins/60),m=mins%60;
 return h+'h'+(m>0?' '+m+'m':'');
 }
 
-function parseAIData(text){
-var results={};
-var lines=text.split('\n').filter(function(l){return l.match(/^\d+\./);});
-lines.forEach(function(line){
-var n=parseInt((line.match(/^(\d+)\./)||[])[1]);
-if(!n)return;
-var tag=/DEAL|🔥/.test(line)?'DEAL':/PASS|⚠️/.test(line)?'PASS':'FAIR';
-var rangeMatch=line.match(/\$(\d[\d,]*)\s*[-–]\s*\$(\d[\d,]*)/);
-var singleMatch=line.match(/\$(\d[\d,]+)/);
-var marketLow=null,marketHigh=null,marketMid=null;
-if(rangeMatch){
-marketLow=parseFloat(rangeMatch[1].replace(/,/g,''));
-marketHigh=parseFloat(rangeMatch[2].replace(/,/g,''));
-marketMid=(marketLow+marketHigh)/2;
-}else if(singleMatch){
-marketMid=parseFloat(singleMatch[1].replace(/,/g,''));
-marketLow=marketMid*0.85;
-marketHigh=marketMid*1.15;
-}
-var cleanText=line.replace(/^\d+\.\s*/,'').replace(/\[.*?\]\s*/,'');
-results[n]={tag:tag,marketMid:marketMid,marketLow:marketLow,marketHigh:marketHigh,text:cleanText};
-});
-return results;
+function rateCard(item, gradeId) {
+  var mv = getMarketValue(item.title || '', gradeId);
+  var bid = getCurrentBid(item);
+  if (!mv) return {tag:'UNKNOWN', marketStr:'—', pctStr:'—', pctClass:'', text:'No comp data — verify manually'};
+  var marketStr = formatPrice(mv.low) + ' – ' + formatPrice(mv.high);
+  if (!bid) return {tag:'WATCH', marketStr:marketStr, pctStr:'No bids', pctClass:'', text:'No current bids — watch for snipe opportunity'};
+  var pct = Math.round(((bid - mv.mid) / mv.mid) * 100);
+  var tag, pctStr, pctClass, text;
+  if (pct <= -20) {
+    tag='DEAL'; pctStr=pct+'%'; pctClass='green';
+    text='🔥 Significantly underpriced vs market. Strong buy.';
+  } else if (pct <= -5) {
+    tag='DEAL'; pctStr=pct+'%'; pctClass='green';
+    text='Below market value. Worth bidding.';
+  } else if (pct <= 5) {
+    tag='FAIR'; pctStr='AT MKT'; pctClass='';
+    text='Priced at market. Bid only if you need it.';
+  } else if (pct <= 20) {
+    tag='PASS'; pctStr='+'+pct+'%'; pctClass='red';
+    text='Slightly above market. Better deals likely available.';
+  } else {
+    tag='PASS'; pctStr='+'+pct+'%'; pctClass='red';
+    text='Overpriced. Skip this one.';
+  }
+  return {tag:tag, marketStr:marketStr, pctStr:pctStr, pctClass:pctClass, text:text};
 }
 
 function renderListings(){
@@ -238,37 +308,22 @@ var tg=GRADES.find(function(t){return t.id===activeGrade;});
 if(!d.listings&&!d.loading){area.innerHTML='<div class="empty">Hit RUN FULL SCAN<br/><span>Auctions ending in 2 hours · sorted soonest</span></div>';return;}
 if(d.loading){area.innerHTML='<div class="loading"><span class="spin">⟳</span><br/>'+(d.status||'Scanning...')+'</div>';return;}
 if(d.error){area.innerHTML='<div class="err">'+d.error+'</div>';return;}
-if(d.aiLoading){area.innerHTML='<div class="ai-loading" style="border-left:3px solid '+tg.color+'">● AI analyzing '+d.listings.length+' listings — calculating value gaps...</div>';return;}
 if(!d.listings||!d.listings.length){area.innerHTML='<div class="empty"><span>No auctions ending soon.<br/>Try again in a few minutes.</span></div>';return;}
-area.innerHTML=d.listings.map(function(item,i){
-var rating=d.ratings?d.ratings[i+1]:null;
+area.innerHTML=d.listings.map(function(item){
+var rating=rateCard(item, activeGrade);
 var currentBid=getCurrentBid(item);
 var timeLeft=formatEndTime(item);
 var img=item.image?item.image.imageUrl:'';
 var urgentMins=timeLeft&&timeLeft.indexOf('m')===timeLeft.length-1&&parseInt(timeLeft)<=30;
-var isDeal=rating&&rating.tag==='DEAL';
-var tagClass=rating?(rating.tag==='DEAL'?'deal':rating.tag==='PASS'?'pass':'fair'):'';
-var tagLabel=rating?(rating.tag==='DEAL'?'🔥 DEAL':rating.tag==='PASS'?'⚠️ PASS':'✅ FAIR'):'';
-var marketStr='—';
-if(rating&&rating.marketLow&&rating.marketHigh){
-marketStr=formatPrice(rating.marketLow)+' – '+formatPrice(rating.marketHigh);
-}else if(rating&&rating.marketMid){
-marketStr='~'+formatPrice(rating.marketMid);
-}
-var pctStr='—';
-var pctClass='';
-if(currentBid&&rating&&rating.marketMid){
-var pct=Math.round(((currentBid-rating.marketMid)/rating.marketMid)*100);
-if(pct<=-5){pctStr=pct+'%';pctClass='green';}
-else if(pct>=5){pctStr='+'+pct+'%';pctClass='red';}
-else{pctStr='AT MKT';pctClass='';}
-}
+var isDeal=rating.tag==='DEAL';
+var tagClass=rating.tag==='DEAL'?'deal':rating.tag==='PASS'?'pass':rating.tag==='FAIR'?'fair':'';
+var tagLabel=rating.tag==='DEAL'?'🔥 DEAL':rating.tag==='PASS'?'⚠️ PASS':rating.tag==='FAIR'?'✅ FAIR':'';
 return '<div class="listing-card'+(isDeal?' is-deal':'')+'">'
 +'<div class="card-top">'
 +(img?'<img class="listing-img" src="'+img+'" alt=""/>':'')
 +'<div class="card-info">'
 +'<div class="tags">'
-+(rating&&tagLabel?'<span class="tag '+tagClass+'">'+tagLabel+'</span>':'')
++(tagLabel?'<span class="tag '+tagClass+'">'+tagLabel+'</span>':'')
 +'<span class="tag auction-tag">AUCTION</span>'
 +(timeLeft?'<span class="tag ending'+(urgentMins?' urgent':'')+'">⏱ '+timeLeft+'</span>':'')
 +'</div>'
@@ -276,10 +331,10 @@ return '<div class="listing-card'+(isDeal?' is-deal':'')+'">'
 +'</div></div>'
 +'<div class="metrics-row">'
 +'<div class="metric"><div class="metric-label">CURRENT BID</div><div class="metric-value gold">'+(currentBid?formatPrice(currentBid):'No bids')+'</div></div>'
-+'<div class="metric"><div class="metric-label">AI MARKET VALUE</div><div class="metric-value" style="font-size:10px;line-height:1.3">'+marketStr+'</div></div>'
-+'<div class="metric"><div class="metric-label">VS MARKET</div><div class="metric-value '+pctClass+'" style="font-size:16px">'+pctStr+'</div></div>'
++'<div class="metric"><div class="metric-label">MARKET VALUE</div><div class="metric-value" style="font-size:10px;line-height:1.4">'+rating.marketStr+'</div></div>'
++'<div class="metric"><div class="metric-label">VS MARKET</div><div class="metric-value '+rating.pctClass+'" style="font-size:15px">'+rating.pctStr+'</div></div>'
 +'</div>'
-+(rating&&rating.text?'<div class="ai-text">'+rating.text+'</div>':'')
++'<div class="ai-text">'+rating.text+'</div>'
 +'<a class="bid-btn'+(urgentMins?' urgent':'')+'" href="'+(item.itemWebUrl||'#')+'" target="_blank">'+(urgentMins?'⚡ BID NOW — ENDING SOON':'BID ON EBAY →')+'</a>'
 +'</div>';
 }).join('');
@@ -311,7 +366,7 @@ var gi=0;
 function nextGrade(){
 if(gi>=GRADES.length){scanning=false;btn.disabled=false;btn.textContent='⚡ RUN FULL SCAN';return;}
 var tg=GRADES[gi];gi++;
-scanData[tg.id]={loading:true,listings:[],ratings:{},aiLoading:false,error:null,status:'Searching for '+tg.grade+' auctions ending soon...'};
+scanData[tg.id]={loading:true,listings:[],ratings:{},aiLoading:false,error:null,status:'Searching for '+tg.grade+' auctions...'};
 updateTabs();if(activeGrade===tg.id)renderListings();
 var all=[],done=0;
 players.forEach(function(player){
@@ -330,33 +385,9 @@ var tb=b.itemEndDate?new Date(b.itemEndDate).getTime():9999999999999;
 return ta-tb;
 });
 var listings=unique.slice(0,20);
-if(!listings.length){
-scanData[tg.id]={loading:false,listings:[],ratings:{},aiLoading:false,error:null};
-updateTabs();if(activeGrade===tg.id)renderListings();
-nextGrade();return;
-}
-scanData[tg.id]={loading:false,listings:listings,ratings:{},aiLoading:true,error:null};
-updateTabs();if(activeGrade===tg.id)renderListings();
-var itemList=listings.slice(0,8).map(function(it,idx){
-var bid=getCurrentBid(it);
-var time=formatEndTime(it)||'ending soon';
-return (idx+1)+'. Bid: '+(bid?formatPrice(bid):'no bids')+' · '+time+' · '+(it.title||'').slice(0,70);
-}).join('\n');
-fetch('https://api.anthropic.com/v1/messages',{
-method:'POST',headers:{'Content-Type':'application/json'},
-body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1200,
-messages:[{role:'user',content:'Expert sports card reseller. Live eBay auctions ending within 2 hours for '+tg.grade+' rookie cards. Need instant bid decisions.\n\n'+itemList+'\n\nFor EACH item respond exactly:\n1. [DEAL🔥/FAIR✅/PASS⚠️] Market value $LOW-$HIGH. Current bid is X% below/above market. Bid or skip.\n\nMust include $X-$Y range for every item. Be fast.'}]})
-}).then(function(r){return r.json();})
-.then(function(ad){
-var text=(ad.content&&ad.content[0])?ad.content[0].text:'';
-scanData[tg.id]={loading:false,listings:listings,ratings:parseAIData(text),aiLoading:false,error:null};
+scanData[tg.id]={loading:false,listings:listings,ratings:{},aiLoading:false,error:null};
 updateTabs();if(activeGrade===tg.id)renderListings();
 nextGrade();
-}).catch(function(){
-scanData[tg.id].aiLoading=false;
-updateTabs();if(activeGrade===tg.id)renderListings();
-nextGrade();
-});
 });
 });
 }
