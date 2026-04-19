@@ -24,12 +24,12 @@ input{background:#070d1a;border:1px solid #1e293b;border-radius:8px;color:#e2e8f
 .btn-orange{background:linear-gradient(135deg,#b45309 0%,#f59e0b 100%);color:#000;font-size:15px}
 .btn-scan{background:linear-gradient(135deg,#b45309 0%,#f59e0b 100%);color:#000;font-size:18px;border-radius:12px;margin-bottom:12px;box-shadow:0 0 30px #f59e0b33}
 .btn:disabled{background:#1e293b;color:#475569;cursor:not-allowed;box-shadow:none}
-.grade-tabs{display:flex;gap:6px;margin-bottom:10px;overflow-x:auto;padding-bottom:4px}
-.grade-tab{background:#070d1a;border:1px solid #1e293b;border-radius:10px;color:#475569;font-family:'Share Tech Mono',monospace;font-size:11px;font-weight:700;letter-spacing:1px;padding:8px 14px;cursor:pointer;white-space:nowrap}
 .window-label{font-size:9px;color:#334155;letter-spacing:2px;margin-bottom:6px}
-.window-tabs{display:flex;gap:6px;margin-bottom:10px;overflow-x:auto;padding-bottom:4px}
+.window-tabs{display:flex;gap:6px;margin-bottom:12px;overflow-x:auto;padding-bottom:4px}
 .window-tab{background:#070d1a;border:1px solid #1e293b;border-radius:8px;color:#475569;font-family:'Share Tech Mono',monospace;font-size:11px;font-weight:700;padding:7px 12px;cursor:pointer;white-space:nowrap;flex-shrink:0}
 .window-tab.active{background:#0ea5e922;border-color:#0ea5e9;color:#0ea5e9}
+.grade-tabs{display:flex;gap:6px;margin-bottom:10px;overflow-x:auto;padding-bottom:4px}
+.grade-tab{background:#070d1a;border:1px solid #1e293b;border-radius:10px;color:#475569;font-family:'Share Tech Mono',monospace;font-size:11px;font-weight:700;letter-spacing:1px;padding:8px 14px;cursor:pointer;white-space:nowrap}
 .view-tabs{display:flex;gap:6px;margin-bottom:16px}
 .view-tab{flex:1;background:#070d1a;border:1px solid #1e293b;border-radius:8px;color:#475569;font-family:'Share Tech Mono',monospace;font-size:10px;font-weight:700;letter-spacing:1px;padding:7px;cursor:pointer;text-align:center}
 .view-tab.active-auction{background:#a78bfa22;border-color:#a78bfa;color:#a78bfa}
@@ -100,20 +100,20 @@ input{background:#070d1a;border:1px solid #1e293b;border-radius:8px;color:#e2e8f
 </div>
 <div id="scannerPanel" style="display:none">
 <button class="btn btn-scan" id="scanBtn" onclick="runFullScan()">⚡ RUN FULL SCAN</button>
-<div class="grade-tabs" id="gradeTabs"></div>
 <div class="window-label">AUCTION WINDOW</div>
-<div class="window-tabs" id="windowTabs">
-<button class="window-tab" onclick="setWindow(0.5)">30 MIN</button>
-<button class="window-tab active" onclick="setWindow(2)">2 HRS</button>
-<button class="window-tab" onclick="setWindow(6)">6 HRS</button>
-<button class="window-tab" onclick="setWindow(12)">12 HRS</button>
-<button class="window-tab" onclick="setWindow(24)">24 HRS</button>
+<div class="window-tabs">
+<button class="window-tab" onclick="setWindow(0.5,this)">30 MIN</button>
+<button class="window-tab active" id="defaultWindow" onclick="setWindow(2,this)">2 HRS</button>
+<button class="window-tab" onclick="setWindow(6,this)">6 HRS</button>
+<button class="window-tab" onclick="setWindow(12,this)">12 HRS</button>
+<button class="window-tab" onclick="setWindow(24,this)">24 HRS</button>
 </div>
+<div class="grade-tabs" id="gradeTabs"></div>
 <div class="view-tabs">
 <div class="view-tab" id="viewAuction" onclick="setView('auction')">⏱ AUCTIONS W/ BIDS</div>
 <div class="view-tab" id="viewBuynow" onclick="setView('buynow')">💰 BUY IT NOW</div>
 </div>
-<div id="listingsArea"><div class="empty">Hit RUN FULL SCAN<br/><span>Any player · $50–$500 · 20%+ below market</span></div></div>
+<div id="listingsArea"><div class="empty">Hit RUN FULL SCAN<br/><span>Select time window · any player · $50–$500</span></div></div>
 </div>
 </div>
 <script>
@@ -125,22 +125,19 @@ var GRADES=[
 {id:'auto95',label:'AUTO 9.5+',grade:'AUTO',color:'#4ade80'}
 ];
 
-var WINDOWS=[
-{label:'30 MIN',hours:0.5},
-{label:'2 HRS',hours:2},
-{label:'6 HRS',hours:6},
-{label:'12 HRS',hours:12},
-{label:'24 HRS',hours:24}
-];
-
 var PARALLEL_KEYWORDS=[
 'instant impact','gridiron kings','elite series','the rookies','emergent',
 'luminance','stained glass','velocity','neo','montage','virtual reality',
 'fathers day','memorial day','black friday','the 100','downtown',
+'red white blue','white sparkle','black and white','tie dye',
 'green prizm','red prizm','blue prizm','gold prizm','orange prizm','purple prizm',
+'pink prizm','silver prizm','bronze prizm','teal prizm','camo prizm',
 'holo','hyper','disco','camo','wave','pulsar','shimmer','ice',
 'cracked','tiger','mojo','peacock','neon','electric','lava','laser',
-'press proof','xr','scope','/25','/10','/5','/1','1/1'
+'press proof','xr','scope','fotl','fast break','genesis','kaboom','stained',
+'choice','breakaway','pink','orange','purple','teal','carolina blue','lucky green',
+'numbered','refractor',
+'/299','/199','/149','/99','/75','/49','/35','/25','/15','/10','/5','/3','/2','/1','1/1'
 ];
 
 var FALLBACK_DB={
@@ -309,20 +306,16 @@ document.getElementById('scannerPanel').style.display='none';
 document.getElementById('logoutBtn').style.display='none';
 }
 
-function setWindow(hours){
+function setWindow(hours,btn){
 activeWindow=hours;
-var tabs=document.querySelectorAll('.window-tab');
-tabs.forEach(function(t,i){
-t.className='window-tab'+(WINDOWS[i].hours===hours?' active':'');
-});
+document.querySelectorAll('.window-tab').forEach(function(t){t.className='window-tab';});
+if(btn)btn.className='window-tab active';
 }
 
 function setView(v){
 activeView=v;
-var a=document.getElementById('viewAuction');
-var b=document.getElementById('viewBuynow');
-a.className='view-tab'+(v==='auction'?' active-auction':'');
-b.className='view-tab'+(v==='buynow'?' active-buynow':'');
+document.getElementById('viewAuction').className='view-tab'+(v==='auction'?' active-auction':'');
+document.getElementById('viewBuynow').className='view-tab'+(v==='buynow'?' active-buynow':'');
 renderListings();
 }
 
@@ -439,7 +432,7 @@ var area=document.getElementById('listingsArea');
 var d=scanData[activeGrade]||{};
 var tg=GRADES.find(function(t){return t.id===activeGrade;});
 if(!d.auctionDeals&&!d.buynowDeals&&!d.loading){
-area.innerHTML='<div class="empty">Hit RUN FULL SCAN<br/><span>Select time window then scan</span></div>';return;
+area.innerHTML='<div class="empty">Hit RUN FULL SCAN<br/><span>Select time window · any player · $50–$500</span></div>';return;
 }
 if(d.loading){
 area.innerHTML='<div class="loading"><span class="spin">⟳</span><br/>'+(d.status||'Scanning...')+'</div>';return;
@@ -476,7 +469,7 @@ if(!clientId||!clientSecret||scanning)return;
 scanning=true;
 var btn=document.getElementById('scanBtn');
 btn.disabled=true;btn.textContent='⟳ SCANNING...';
-document.getElementById('lastScan').textContent='Last: '+new Date().toLocaleTimeString()+' · '+activeWindow+'hr window';
+document.getElementById('lastScan').textContent='Last: '+new Date().toLocaleTimeString()+' · '+activeWindow+'hr';
 var gi=0;
 function nextGrade(){
 if(gi>=GRADES.length){scanning=false;btn.disabled=false;btn.textContent='⚡ RUN FULL SCAN';return;}
