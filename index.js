@@ -20,8 +20,10 @@ async function getToken(clientId, clientSecret) {
   return data.access_token;
 }
 
+// Real sold comps from eBay Finding API - last 90 days only
 async function getSoldComps(appId, title, grade) {
   try {
+    // Clean title for better matching
     const cleanTitle = title
       .replace(/\d+\/\d+/g, '')
       .replace(/R\d{4,}/gi, '')
@@ -30,8 +32,9 @@ async function getSoldComps(appId, title, grade) {
       .replace(/SGC\s*\d+(\.\d+)?/gi, '')
       .replace(/GEM\s*MINT/gi, '')
       .replace(/GEM\s*MT/gi, '')
+      .replace(/true gem/gi, '')
       .trim()
-      .slice(0, 60);
+      .slice(0, 55);
 
     const query = `${cleanTitle} ${grade}`;
 
@@ -45,23 +48,18 @@ async function getSoldComps(appId, title, grade) {
       + '&categoryId=261328'
       + '&itemFilter(0).name=SoldItemsOnly'
       + '&itemFilter(0).value=true'
-      + '&itemFilter(1).name=ListingType'
-      + '&itemFilter(1).value=AuctionWithBIN'
-      + '&itemFilter(2).name=ListingType'
-      + '&itemFilter(2).value=FixedPrice'
-      + '&itemFilter(3).name=ListingType'
-      + '&itemFilter(3).value=Auction'
-      + '&itemFilter(4).name=MinPrice'
-      + '&itemFilter(4).value=10'
-      + '&itemFilter(5).name=MaxPrice'
-      + '&itemFilter(5).value=50000'
+      + '&itemFilter(1).name=MinPrice'
+      + '&itemFilter(1).value=10'
+      + '&itemFilter(2).name=MaxPrice'
+      + '&itemFilter(2).value=50000'
       + '&sortOrder=EndTimeSoonest'
-      + '&paginationInput.entriesPerPage=20';
+      + '&paginationInput.entriesPerPage=25';
 
     const r = await fetch(url);
     const data = await r.json();
-
     const items = (data?.findCompletedItemsResponse?.[0]?.searchResult?.[0]?.item) || [];
+
+    // Only use sales from last 90 days
     const ninetyDaysAgo = Date.now() - (90 * 24 * 60 * 60 * 1000);
 
     const prices = items
@@ -76,15 +74,23 @@ async function getSoldComps(appId, title, grade) {
       })
       .filter(p => p && p > 5 && p < 100000);
 
-    if (prices.length < 2) return null;
+    // Need at least 3 real sales to trust the data
+    if (prices.length < 3) return null;
 
     prices.sort((a, b) => a - b);
-    const trimmed = prices.length > 4 ? prices.slice(1, -1) : prices;
+
+    // Remove top and bottom outliers
+    const trimmed = prices.length >= 6 ? prices.slice(1, -1) : prices;
     const avg = trimmed.reduce((s, p) => s + p, 0) / trimmed.length;
+    const low = Math.min(...trimmed);
+    const high = Math.max(...trimmed);
+
+    // Sanity check — if high/low ratio is too extreme the data is garbage
+    if (high / low > 10) return null;
 
     return {
-      low: Math.round(Math.min(...trimmed)),
-      high: Math.round(Math.max(...trimmed)),
+      low: Math.round(low),
+      high: Math.round(high),
       mid: Math.round(avg),
       count: prices.length
     };
@@ -192,12 +198,13 @@ app.get('/scan', async (req, res) => {
 
     const top = withBids.slice(0, 30);
 
+    // Get sold comps in batches
     const batchSize = 10;
     for (let i = 0; i < top.length; i += batchSize) {
       const batch = top.slice(i, i + batchSize);
       await Promise.all(batch.map(async (item) => {
         const comps = await getSoldComps(clientId, item.title || '', grade || 'PSA 10');
-        if (comps && comps.count >= 2) {
+        if (comps && comps.count >= 3) {
           item.soldComps = comps;
         }
       }));
