@@ -24,8 +24,12 @@ input{background:#070d1a;border:1px solid #1e293b;border-radius:8px;color:#e2e8f
 .btn-orange{background:linear-gradient(135deg,#b45309 0%,#f59e0b 100%);color:#000;font-size:15px}
 .btn-scan{background:linear-gradient(135deg,#b45309 0%,#f59e0b 100%);color:#000;font-size:18px;border-radius:12px;margin-bottom:12px;box-shadow:0 0 30px #f59e0b33}
 .btn:disabled{background:#1e293b;color:#475569;cursor:not-allowed;box-shadow:none}
-.grade-tabs{display:flex;gap:6px;margin-bottom:12px;overflow-x:auto;padding-bottom:4px}
+.grade-tabs{display:flex;gap:6px;margin-bottom:10px;overflow-x:auto;padding-bottom:4px}
 .grade-tab{background:#070d1a;border:1px solid #1e293b;border-radius:10px;color:#475569;font-family:'Share Tech Mono',monospace;font-size:11px;font-weight:700;letter-spacing:1px;padding:8px 14px;cursor:pointer;white-space:nowrap}
+.window-label{font-size:9px;color:#334155;letter-spacing:2px;margin-bottom:6px}
+.window-tabs{display:flex;gap:6px;margin-bottom:10px;overflow-x:auto;padding-bottom:4px}
+.window-tab{background:#070d1a;border:1px solid #1e293b;border-radius:8px;color:#475569;font-family:'Share Tech Mono',monospace;font-size:11px;font-weight:700;padding:7px 12px;cursor:pointer;white-space:nowrap;flex-shrink:0}
+.window-tab.active{background:#0ea5e922;border-color:#0ea5e9;color:#0ea5e9}
 .view-tabs{display:flex;gap:6px;margin-bottom:16px}
 .view-tab{flex:1;background:#070d1a;border:1px solid #1e293b;border-radius:8px;color:#475569;font-family:'Share Tech Mono',monospace;font-size:10px;font-weight:700;letter-spacing:1px;padding:7px;cursor:pointer;text-align:center}
 .view-tab.active-auction{background:#a78bfa22;border-color:#a78bfa;color:#a78bfa}
@@ -65,9 +69,7 @@ input{background:#070d1a;border:1px solid #1e293b;border-radius:8px;color:#e2e8f
 .err{padding:16px;background:#1c0a0a;border:1px solid #f8717133;border-radius:8px;font-size:12px;color:#f87171}
 .deal-badge{background:#f59e0b22;border:1px solid #f59e0b44;border-radius:8px;padding:6px 12px;font-family:'Orbitron',monospace;font-size:14px;color:#f59e0b;font-weight:700;display:none}
 .logout{background:#1e293b;color:#64748b;border:1px solid #334155;border-radius:6px;padding:4px 10px;font-size:10px;font-family:'Share Tech Mono',monospace;cursor:pointer;letter-spacing:1px}
-.scan-info{font-size:10px;color:#334155;text-align:center;margin-bottom:12px;line-height:1.6}
 .no-deals{text-align:center;padding:40px 20px;color:#334155;font-size:12px;line-height:2}
-.section-header{font-size:9px;color:#475569;letter-spacing:2px;margin-bottom:8px;padding:4px 0;border-bottom:1px solid #1e293b}
 @keyframes spin{to{transform:rotate(360deg)}}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}
 .spin{display:inline-block;animation:spin 1s linear infinite}
@@ -98,8 +100,15 @@ input{background:#070d1a;border:1px solid #1e293b;border-radius:8px;color:#e2e8f
 </div>
 <div id="scannerPanel" style="display:none">
 <button class="btn btn-scan" id="scanBtn" onclick="runFullScan()">⚡ RUN FULL SCAN</button>
-<div class="scan-info">All graded rookies $50–$500 · Auctions w/bids ending 2hrs + Buy It Now</div>
 <div class="grade-tabs" id="gradeTabs"></div>
+<div class="window-label">AUCTION WINDOW</div>
+<div class="window-tabs" id="windowTabs">
+<button class="window-tab" onclick="setWindow(0.5)">30 MIN</button>
+<button class="window-tab active" onclick="setWindow(2)">2 HRS</button>
+<button class="window-tab" onclick="setWindow(6)">6 HRS</button>
+<button class="window-tab" onclick="setWindow(12)">12 HRS</button>
+<button class="window-tab" onclick="setWindow(24)">24 HRS</button>
+</div>
 <div class="view-tabs">
 <div class="view-tab" id="viewAuction" onclick="setView('auction')">⏱ AUCTIONS W/ BIDS</div>
 <div class="view-tab" id="viewBuynow" onclick="setView('buynow')">💰 BUY IT NOW</div>
@@ -114,6 +123,14 @@ var GRADES=[
 {id:'psa9',label:'PSA 9',grade:'PSA 9',color:'#38bdf8'},
 {id:'bgs95',label:'BGS 9.5',grade:'BGS 9.5',color:'#a78bfa'},
 {id:'auto95',label:'AUTO 9.5+',grade:'AUTO',color:'#4ade80'}
+];
+
+var WINDOWS=[
+{label:'30 MIN',hours:0.5},
+{label:'2 HRS',hours:2},
+{label:'6 HRS',hours:6},
+{label:'12 HRS',hours:12},
+{label:'24 HRS',hours:24}
 ];
 
 var PARALLEL_KEYWORDS=[
@@ -257,7 +274,7 @@ if(!best)return null;
 return{low:best.low,high:best.high,mid:(best.low+best.high)/2,grade:actualGrade,source:'est'};
 }
 
-var clientId='',clientSecret='',activeGrade='psa10',activeView='auction',scanData={},scanning=false;
+var clientId='',clientSecret='',activeGrade='psa10',activeView='auction',activeWindow=2,scanData={},scanning=false;
 
 function init(){
 var sid=localStorage.getItem('ebay_client_id');
@@ -292,6 +309,14 @@ document.getElementById('scannerPanel').style.display='none';
 document.getElementById('logoutBtn').style.display='none';
 }
 
+function setWindow(hours){
+activeWindow=hours;
+var tabs=document.querySelectorAll('.window-tab');
+tabs.forEach(function(t,i){
+t.className='window-tab'+(WINDOWS[i].hours===hours?' active':'');
+});
+}
+
 function setView(v){
 activeView=v;
 var a=document.getElementById('viewAuction');
@@ -316,9 +341,7 @@ function updateTabs(){
 GRADES.forEach(function(tg){
 var b=document.getElementById('tab-'+tg.id);if(!b)return;
 var d=scanData[tg.id]||{};
-var aDeals=d.auctionDeals?d.auctionDeals.length:0;
-var bDeals=d.buynowDeals?d.buynowDeals.length:0;
-var total=aDeals+bDeals;
+var total=(d.auctionDeals?d.auctionDeals.length:0)+(d.buynowDeals?d.buynowDeals.length:0);
 var active=activeGrade===tg.id;
 b.style.background=active?tg.color+'22':'#070d1a';
 b.style.borderColor=active?tg.color:'#1e293b';
@@ -356,7 +379,6 @@ return h+'h'+(m>0?' '+m+'m':'');
 function rateCard(item,tabGradeId){
 var isAuction=(item.buyingOptions||[]).indexOf('AUCTION')>=0;
 var bid=getCurrentBid(item);
-// Skip zero bid auctions
 if(isAuction&&(!bid||bid<=0))return null;
 if(!bid)return null;
 var mv=null;
@@ -417,19 +439,18 @@ var area=document.getElementById('listingsArea');
 var d=scanData[activeGrade]||{};
 var tg=GRADES.find(function(t){return t.id===activeGrade;});
 if(!d.auctionDeals&&!d.buynowDeals&&!d.loading){
-area.innerHTML='<div class="empty">Hit RUN FULL SCAN<br/><span>Any player · $50–$500 · 20%+ below market</span></div>';return;
+area.innerHTML='<div class="empty">Hit RUN FULL SCAN<br/><span>Select time window then scan</span></div>';return;
 }
 if(d.loading){
 area.innerHTML='<div class="loading"><span class="spin">⟳</span><br/>'+(d.status||'Scanning...')+'</div>';return;
 }
 if(d.error){area.innerHTML='<div class="err">'+d.error+'</div>';return;}
-
 var deals=activeView==='auction'?(d.auctionDeals||[]):(d.buynowDeals||[]);
 if(!deals.length){
 var other=activeView==='auction'?(d.buynowDeals||[]):(d.auctionDeals||[]);
 var otherLabel=activeView==='auction'?'Buy It Now':'Auctions';
-var hint=other.length>0?' Try the '+otherLabel+' tab — '+other.length+' deal'+(other.length>1?'s':'')+' there.':'';
-area.innerHTML='<div class="no-deals">No 20%+ deals in this view for '+tg.label+'<br/><span style="color:#475569">Check back in 15 min.'+hint+'</span></div>';
+var hint=other.length>0?' Try '+otherLabel+' — '+other.length+' deal'+(other.length>1?'s':'')+' there.':'';
+area.innerHTML='<div class="no-deals">No 20%+ deals in this view for '+tg.label+'<br/><span style="color:#475569">Check back soon.'+hint+'</span></div>';
 return;
 }
 area.innerHTML=deals.map(renderCard).join('');
@@ -455,14 +476,14 @@ if(!clientId||!clientSecret||scanning)return;
 scanning=true;
 var btn=document.getElementById('scanBtn');
 btn.disabled=true;btn.textContent='⟳ SCANNING...';
-document.getElementById('lastScan').textContent='Last: '+new Date().toLocaleTimeString();
+document.getElementById('lastScan').textContent='Last: '+new Date().toLocaleTimeString()+' · '+activeWindow+'hr window';
 var gi=0;
 function nextGrade(){
 if(gi>=GRADES.length){scanning=false;btn.disabled=false;btn.textContent='⚡ RUN FULL SCAN';return;}
 var tg=GRADES[gi];gi++;
-scanData[tg.id]={loading:true,auctionDeals:[],buynowDeals:[],error:null,status:'Scanning '+tg.label+' $50–$500...'};
+scanData[tg.id]={loading:true,auctionDeals:[],buynowDeals:[],error:null,status:'Scanning '+tg.label+' · '+activeWindow+'hr window...'};
 updateTabs();if(activeGrade===tg.id)renderListings();
-var url=PROXY+'/scan?clientId='+encodeURIComponent(clientId)+'&clientSecret='+encodeURIComponent(clientSecret)+'&grade='+encodeURIComponent(tg.grade);
+var url=PROXY+'/scan?clientId='+encodeURIComponent(clientId)+'&clientSecret='+encodeURIComponent(clientSecret)+'&grade='+encodeURIComponent(tg.grade)+'&window='+activeWindow;
 fetchWithRetry(url,2,4000).then(function(data){
 var items=data.itemSummaries||[];
 var auctionDeals=[],buynowDeals=[];
@@ -476,7 +497,7 @@ scanData[tg.id]={loading:false,auctionDeals:auctionDeals,buynowDeals:buynowDeals
 updateTabs();if(activeGrade===tg.id)renderListings();
 nextGrade();
 }).catch(function(e){
-scanData[tg.id]={loading:false,auctionDeals:[],buynowDeals:[],error:'Scan failed — wake server first at card-scanner-proxy.onrender.com/token'};
+scanData[tg.id]={loading:false,auctionDeals:[],buynowDeals:[],error:'Scan failed — wake server first'};
 updateTabs();if(activeGrade===tg.id)renderListings();
 nextGrade();
 });
