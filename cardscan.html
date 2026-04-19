@@ -103,7 +103,7 @@ input{background:#070d1a;border:1px solid #1e293b;border-radius:8px;color:#e2e8f
 <div class="window-label">AUCTION WINDOW</div>
 <div class="window-tabs">
 <button class="window-tab" onclick="setWindow(0.5,this)">30 MIN</button>
-<button class="window-tab active" id="defaultWindow" onclick="setWindow(2,this)">2 HRS</button>
+<button class="window-tab active" onclick="setWindow(2,this)">2 HRS</button>
 <button class="window-tab" onclick="setWindow(6,this)">6 HRS</button>
 <button class="window-tab" onclick="setWindow(12,this)">12 HRS</button>
 <button class="window-tab" onclick="setWindow(24,this)">24 HRS</button>
@@ -113,7 +113,7 @@ input{background:#070d1a;border:1px solid #1e293b;border-radius:8px;color:#e2e8f
 <div class="view-tab" id="viewAuction" onclick="setView('auction')">⏱ AUCTIONS W/ BIDS</div>
 <div class="view-tab" id="viewBuynow" onclick="setView('buynow')">💰 BUY IT NOW</div>
 </div>
-<div id="listingsArea"><div class="empty">Hit RUN FULL SCAN<br/><span>Select time window · any player · $50–$500</span></div></div>
+<div id="listingsArea"><div class="empty">Hit RUN FULL SCAN<br/><span>Real sold comps only · $50–$500 · 20%+ below market</span></div></div>
 </div>
 </div>
 <script>
@@ -140,102 +140,6 @@ var PARALLEL_KEYWORDS=[
 '/299','/199','/149','/99','/75','/49','/35','/25','/15','/10','/5','/3','/2','/1','1/1'
 ];
 
-var FALLBACK_DB={
-psa10:[
-{p:'mahomes',s:'prizm',low:4200,high:5800},
-{p:'mahomes',s:'donruss',low:750,high:1050},
-{p:'mahomes',s:'optic',low:700,high:950},
-{p:'mahomes',s:'contenders',low:550,high:850},
-{p:'mahomes',s:'select',low:450,high:700},
-{p:'mahomes',s:'topps chrome',low:350,high:600},
-{p:'mahomes',s:'topps',low:220,high:380},
-{p:'mahomes',s:'score',low:180,high:280},
-{p:'brady',s:'bowman chrome',low:11000,high:14500},
-{p:'brady',s:'bowman',low:900,high:1400},
-{p:'brady',s:'topps chrome',low:3200,high:5000},
-{p:'brady',s:'contenders',low:3500,high:6000},
-{p:'brady',s:'upper deck',low:450,high:750},
-{p:'brady',s:'fleer',low:380,high:650},
-{p:'brady',s:'score',low:280,high:480},
-{p:'brady',s:'topps',low:700,high:1100},
-{p:'josh allen',s:'prizm',low:350,high:600},
-{p:'josh allen',s:'donruss',low:180,high:320},
-{p:'lamar jackson',s:'prizm',low:280,high:450},
-{p:'burrow',s:'prizm',low:180,high:320},
-{p:'burrow',s:'donruss',low:90,high:160},
-{p:'herbert',s:'prizm',low:130,high:240},
-{p:'caleb williams',s:'prizm',low:80,high:160},
-{p:'jayden daniels',s:'prizm',low:60,high:120},
-{p:'jeanty',s:'prizm',low:50,high:110},
-{p:'wembanyama',s:'prizm',low:130,high:180},
-{p:'wembanyama',s:'hoops',low:60,high:90},
-{p:'flagg',s:'topps chrome',low:380,high:520},
-{p:'flagg',s:'prizm',low:300,high:480},
-{p:'anthony edwards',s:'prizm',low:180,high:280},
-{p:'luka',s:'prizm',low:450,high:750},
-{p:'tatum',s:'prizm',low:180,high:300},
-{p:'judge',s:'topps chrome',low:280,high:450},
-{p:'ohtani',s:'topps chrome',low:350,high:550},
-{p:'trout',s:'topps chrome',low:600,high:950},
-{p:'stroud',s:'prizm',low:80,high:160},
-{p:'travis kelce',s:'prizm',low:130,high:240},
-{p:'justin jefferson',s:'prizm',low:100,high:180},
-{p:'ja morant',s:'prizm',low:180,high:320},
-{p:'devin booker',s:'prizm',low:130,high:240}
-],
-psa9:[
-{p:'mahomes',s:'prizm',low:900,high:1200},
-{p:'mahomes',s:'donruss',low:230,high:400},
-{p:'mahomes',s:'optic',low:220,high:380},
-{p:'mahomes',s:'contenders',low:180,high:320},
-{p:'mahomes',s:'topps chrome',low:120,high:220},
-{p:'mahomes',s:'score',low:70,high:120},
-{p:'brady',s:'bowman chrome',low:3200,high:4800},
-{p:'brady',s:'topps chrome',low:1100,high:1900},
-{p:'brady',s:'contenders',low:1200,high:2200},
-{p:'brady',s:'topps',low:240,high:420},
-{p:'josh allen',s:'prizm',low:130,high:240},
-{p:'lamar jackson',s:'prizm',low:100,high:180},
-{p:'burrow',s:'prizm',low:70,high:130},
-{p:'wembanyama',s:'prizm',low:50,high:90},
-{p:'flagg',s:'topps chrome',low:140,high:220},
-{p:'luka',s:'prizm',low:160,high:280},
-{p:'judge',s:'topps chrome',low:100,high:180},
-{p:'ohtani',s:'topps chrome',low:130,high:230},
-{p:'trout',s:'topps chrome',low:220,high:380},
-{p:'ja morant',s:'prizm',low:70,high:130}
-],
-bgs95:[
-{p:'mahomes',s:'prizm',low:2200,high:3500},
-{p:'mahomes',s:'donruss',low:420,high:680},
-{p:'mahomes',s:'contenders',low:320,high:520},
-{p:'brady',s:'bowman chrome',low:7000,high:10500},
-{p:'brady',s:'topps chrome',low:2000,high:3500},
-{p:'brady',s:'contenders',low:2100,high:3600},
-{p:'josh allen',s:'prizm',low:200,high:360},
-{p:'burrow',s:'prizm',low:110,high:200},
-{p:'wembanyama',s:'prizm',low:95,high:160},
-{p:'luka',s:'prizm',low:270,high:450},
-{p:'flagg',s:'topps chrome',low:240,high:380},
-{p:'judge',s:'topps chrome',low:160,high:280},
-{p:'ohtani',s:'topps chrome',low:210,high:350},
-{p:'trout',s:'topps chrome',low:380,high:620}
-],
-auto95:[
-{p:'mahomes',s:'',low:3000,high:6000},
-{p:'brady',s:'',low:1500,high:3500},
-{p:'josh allen',s:'',low:500,high:950},
-{p:'lamar jackson',s:'',low:400,high:780},
-{p:'burrow',s:'',low:300,high:580},
-{p:'wembanyama',s:'',low:500,high:1000},
-{p:'flagg',s:'',low:200,high:500},
-{p:'luka',s:'',low:800,high:1600},
-{p:'tatum',s:'',low:300,high:600},
-{p:'judge',s:'',low:280,high:550},
-{p:'ohtani',s:'',low:400,high:900}
-]
-};
-
 function isParallelOrInsert(title){
 var t=title.toLowerCase();
 for(var i=0;i<PARALLEL_KEYWORDS.length;i++){
@@ -252,23 +156,6 @@ if(/PSA\s*9(?!\.5|\s*10)/.test(t))return'psa9';
 if(/SGC\s*10/.test(t))return'psa10';
 if(/SGC\s*9\.5/.test(t))return'bgs95';
 return null;
-}
-
-function getFallbackValue(title,tabGradeId){
-if(isParallelOrInsert(title))return null;
-var t=title.toLowerCase();
-var actualGrade=detectGradeFromTitle(title)||tabGradeId;
-var values=FALLBACK_DB[actualGrade]||FALLBACK_DB[tabGradeId]||FALLBACK_DB['psa10'];
-var best=null,bestScore=0;
-for(var i=0;i<values.length;i++){
-var c=values[i];
-if(t.indexOf(c.p)<0)continue;
-var score=1;
-if(c.s&&c.s.length>0){if(t.indexOf(c.s)<0)continue;score+=c.s.split(' ').length;}
-if(score>bestScore){bestScore=score;best=c;}
-}
-if(!best)return null;
-return{low:best.low,high:best.high,mid:(best.low+best.high)/2,grade:actualGrade,source:'est'};
 }
 
 var clientId='',clientSecret='',activeGrade='psa10',activeView='auction',activeWindow=2,scanData={},scanning=false;
@@ -374,18 +261,21 @@ var isAuction=(item.buyingOptions||[]).indexOf('AUCTION')>=0;
 var bid=getCurrentBid(item);
 if(isAuction&&(!bid||bid<=0))return null;
 if(!bid)return null;
-var mv=null;
-if(item.soldComps&&item.soldComps.mid&&item.soldComps.count>=2){
+if(isParallelOrInsert(item.title||''))return null;
+// Only use live sold comps — no fallback DB
+if(!item.soldComps||item.soldComps.count<3)return null;
 var actualGrade=detectGradeFromTitle(item.title||'')||tabGradeId;
-mv={low:item.soldComps.low,high:item.soldComps.high,mid:item.soldComps.mid,grade:actualGrade,source:'live · '+item.soldComps.count+' sales'};
-}else{
-mv=getFallbackValue(item.title||'',tabGradeId);
-}
-if(!mv)return null;
+var gradeLabel={'psa10':'PSA 10','psa9':'PSA 9','bgs95':'BGS 9.5','auto95':'AUTO'}[actualGrade]||actualGrade;
+var mv={
+low:item.soldComps.low,
+high:item.soldComps.high,
+mid:item.soldComps.mid,
+grade:actualGrade,
+source:'live · '+item.soldComps.count+' sold'
+};
 var pct=Math.round(((bid-mv.mid)/mv.mid)*100);
 if(pct>-20)return null;
 var isFire=pct<=-40;
-var gradeLabel={'psa10':'PSA 10','psa9':'PSA 9','bgs95':'BGS 9.5','auto95':'AUTO'}[mv.grade]||mv.grade;
 var text='';
 if(pct<=-40)text='🚨 '+Math.abs(pct)+'% below '+gradeLabel+' market. Bid immediately.';
 else if(pct<=-30)text='🔥 '+Math.abs(pct)+'% below '+gradeLabel+' market. Strong flip.';
@@ -432,7 +322,7 @@ var area=document.getElementById('listingsArea');
 var d=scanData[activeGrade]||{};
 var tg=GRADES.find(function(t){return t.id===activeGrade;});
 if(!d.auctionDeals&&!d.buynowDeals&&!d.loading){
-area.innerHTML='<div class="empty">Hit RUN FULL SCAN<br/><span>Select time window · any player · $50–$500</span></div>';return;
+area.innerHTML='<div class="empty">Hit RUN FULL SCAN<br/><span>Real sold comps only · $50–$500 · 20%+ below market</span></div>';return;
 }
 if(d.loading){
 area.innerHTML='<div class="loading"><span class="spin">⟳</span><br/>'+(d.status||'Scanning...')+'</div>';return;
