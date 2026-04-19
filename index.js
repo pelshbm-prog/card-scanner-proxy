@@ -20,23 +20,50 @@ async function getToken(clientId, clientSecret) {
   return data.access_token;
 }
 
-// Real sold comps from eBay Finding API - last 90 days only
+// Extract player name and set from title for broader comp search
+function extractCardInfo(title) {
+  const t = title.toLowerCase();
+  // Common player names
+  const players = [
+    'mahomes','brady','josh allen','lamar jackson','burrow','herbert',
+    'stroud','caleb williams','jayden daniels','jeanty','prescott',
+    'wembanyama','flagg','anthony edwards','luka','tatum','sga','gilgeous',
+    'ja morant','booker','giannis','curry','lebron',
+    'judge','ohtani','trout','acuna','soto','witt','betts',
+    'jefferson','hill','kelce','mccaffrey','henry','barkley'
+  ];
+  const sets = [
+    'prizm','donruss','topps chrome','bowman chrome','contenders',
+    'optic','select','hoops','mosaic','score','topps','bowman','fleer',
+    'upper deck','sp authentic'
+  ];
+  let player = players.find(p => t.includes(p)) || '';
+  let set = sets.find(s => t.includes(s)) || '';
+  return { player, set };
+}
+
 async function getSoldComps(appId, title, grade) {
   try {
-    // Clean title for better matching
-    const cleanTitle = title
-      .replace(/\d+\/\d+/g, '')
-      .replace(/R\d{4,}/gi, '')
-      .replace(/PSA\s*\d+(\.\d+)?/gi, '')
-      .replace(/BGS\s*\d+(\.\d+)?/gi, '')
-      .replace(/SGC\s*\d+(\.\d+)?/gi, '')
-      .replace(/GEM\s*MINT/gi, '')
-      .replace(/GEM\s*MT/gi, '')
-      .replace(/true gem/gi, '')
-      .trim()
-      .slice(0, 55);
+    const { player, set } = extractCardInfo(title);
 
-    const query = `${cleanTitle} ${grade}`;
+    // Build a focused but not too specific query
+    let query = '';
+    if (player && set) {
+      query = `${player} ${set} rookie ${grade}`;
+    } else if (player) {
+      query = `${player} rookie ${grade}`;
+    } else {
+      // Fall back to cleaned title
+      query = title
+        .replace(/\d+\/\d+/g, '')
+        .replace(/R\d{4,}/gi, '')
+        .replace(/PSA\s*\d+(\.\d+)?/gi, '')
+        .replace(/BGS\s*\d+(\.\d+)?/gi, '')
+        .replace(/SGC\s*\d+(\.\d+)?/gi, '')
+        .replace(/GEM\s*MINT/gi, '')
+        .trim()
+        .slice(0, 50) + ' ' + grade;
+    }
 
     const url = 'https://svcs.ebay.com/services/search/FindingService/v1'
       + '?OPERATION-NAME=findCompletedItems'
@@ -51,15 +78,15 @@ async function getSoldComps(appId, title, grade) {
       + '&itemFilter(1).name=MinPrice'
       + '&itemFilter(1).value=10'
       + '&itemFilter(2).name=MaxPrice'
-      + '&itemFilter(2).value=50000'
+      + '&itemFilter(2).value=100000'
       + '&sortOrder=EndTimeSoonest'
-      + '&paginationInput.entriesPerPage=25';
+      + '&paginationInput.entriesPerPage=30';
 
     const r = await fetch(url);
     const data = await r.json();
     const items = (data?.findCompletedItemsResponse?.[0]?.searchResult?.[0]?.item) || [];
 
-    // Only use sales from last 90 days
+    // Last 90 days only
     const ninetyDaysAgo = Date.now() - (90 * 24 * 60 * 60 * 1000);
 
     const prices = items
@@ -74,19 +101,16 @@ async function getSoldComps(appId, title, grade) {
       })
       .filter(p => p && p > 5 && p < 100000);
 
-    // Need at least 3 real sales to trust the data
-    if (prices.length < 3) return null;
+    if (prices.length < 2) return null;
 
     prices.sort((a, b) => a - b);
-
-    // Remove top and bottom outliers
-    const trimmed = prices.length >= 6 ? prices.slice(1, -1) : prices;
+    const trimmed = prices.length >= 5 ? prices.slice(1, -1) : prices;
     const avg = trimmed.reduce((s, p) => s + p, 0) / trimmed.length;
     const low = Math.min(...trimmed);
     const high = Math.max(...trimmed);
 
-    // Sanity check — if high/low ratio is too extreme the data is garbage
-    if (high / low > 10) return null;
+    // Sanity check
+    if (high / low > 8) return null;
 
     return {
       low: Math.round(low),
@@ -196,17 +220,15 @@ app.get('/scan', async (req, res) => {
       return 0;
     });
 
-    const top = withBids.slice(0, 30);
+    const top = withBids.slice(0, 40);
 
-    // Get sold comps in batches
+    // Get comps in batches of 10
     const batchSize = 10;
     for (let i = 0; i < top.length; i += batchSize) {
       const batch = top.slice(i, i + batchSize);
       await Promise.all(batch.map(async (item) => {
         const comps = await getSoldComps(clientId, item.title || '', grade || 'PSA 10');
-        if (comps && comps.count >= 3) {
-          item.soldComps = comps;
-        }
+        if (comps) item.soldComps = comps;
       }));
     }
 
