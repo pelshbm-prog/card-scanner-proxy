@@ -62,7 +62,6 @@ async function getSoldComps(appId, title, grade) {
     const data = await r.json();
 
     const items = (data?.findCompletedItemsResponse?.[0]?.searchResult?.[0]?.item) || [];
-
     const ninetyDaysAgo = Date.now() - (90 * 24 * 60 * 60 * 1000);
 
     const prices = items
@@ -82,27 +81,31 @@ async function getSoldComps(appId, title, grade) {
     prices.sort((a, b) => a - b);
     const trimmed = prices.length > 4 ? prices.slice(1, -1) : prices;
     const avg = trimmed.reduce((s, p) => s + p, 0) / trimmed.length;
-    const low = Math.min(...trimmed);
-    const high = Math.max(...trimmed);
 
-    return { low: Math.round(low), high: Math.round(high), mid: Math.round(avg), count: prices.length };
+    return {
+      low: Math.round(Math.min(...trimmed)),
+      high: Math.round(Math.max(...trimmed)),
+      mid: Math.round(avg),
+      count: prices.length
+    };
   } catch(e) {
     return null;
   }
 }
 
-async function searchCards(token, grade, buyingOption) {
+async function searchCards(token, grade, buyingOption, windowHours) {
   try {
     const gradeQuery = grade === 'AUTO'
       ? 'rookie auto graded PSA BGS SGC'
       : `rookie ${grade}`;
 
     const now = new Date().toISOString();
-    const twoHours = new Date(Date.now() + 7200000).toISOString();
+    const windowMs = (windowHours || 2) * 3600000;
+    const windowEnd = new Date(Date.now() + windowMs).toISOString();
 
     let filter = `price:[50..500],priceCurrency:USD,buyingOptions:{${buyingOption}}`;
     if (buyingOption === 'AUCTION') {
-      filter += `,endTimeFrom:${now},endTimeTo:${twoHours}`;
+      filter += `,endTimeFrom:${now},endTimeTo:${windowEnd}`;
     }
 
     const url = `https://api.ebay.com/buy/browse/v1/item_summary/search`
@@ -146,7 +149,6 @@ function removeZeroBidAuctions(items) {
   return items.filter(item => {
     const isAuction = (item.buyingOptions || []).includes('AUCTION');
     if (!isAuction) return true;
-    // Remove Best Offer listings — no real competitive bids
     if ((item.buyingOptions || []).includes('BEST_OFFER')) return false;
     const bid = item.currentBidPrice || item.price;
     const bidVal = bid ? parseFloat(bid.value) : 0;
@@ -156,12 +158,13 @@ function removeZeroBidAuctions(items) {
 
 app.get('/scan', async (req, res) => {
   try {
-    const { clientId, clientSecret, grade } = req.query;
+    const { clientId, clientSecret, grade, window } = req.query;
+    const windowHours = parseFloat(window) || 2;
     const token = await getToken(clientId, clientSecret);
 
     const [auctionItems, fixedItems] = await Promise.all([
-      searchCards(token, grade, 'AUCTION'),
-      searchCards(token, grade, 'FIXED_PRICE')
+      searchCards(token, grade, 'AUCTION', windowHours),
+      searchCards(token, grade, 'FIXED_PRICE', windowHours)
     ]);
 
     const seen = {};
