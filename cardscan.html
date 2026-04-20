@@ -80,7 +80,7 @@ input{background:#070d1a;border:1px solid #1e293b;border-radius:8px;color:#e2e8f
 <div style="max-width:700px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
 <div>
 <div class="logo">CARD<span>SCAN</span></div>
-<div class="subtitle">LIVE COMPS · 20%+ UNDER VALUE</div>
+<div class="subtitle">LIVE COMPS · 15%+ UNDER VALUE</div>
 </div>
 <div style="display:flex;align-items:center;gap:12px">
 <div id="dealBadge" class="deal-badge">🔥 <span id="dealCount">0</span> DEALS</div>
@@ -113,7 +113,7 @@ input{background:#070d1a;border:1px solid #1e293b;border-radius:8px;color:#e2e8f
 <div class="view-tab" id="viewAuction" onclick="setView('auction')">⏱ AUCTIONS W/ BIDS</div>
 <div class="view-tab" id="viewBuynow" onclick="setView('buynow')">💰 BUY IT NOW</div>
 </div>
-<div id="listingsArea"><div class="empty">Hit RUN FULL SCAN<br/><span>$50–$500 · 20%+ below market · any player</span></div></div>
+<div id="listingsArea"><div class="empty">Hit RUN FULL SCAN<br/><span>$25–$1000 · 15%+ below market · any player</span></div></div>
 </div>
 </div>
 <script>
@@ -123,29 +123,6 @@ var GRADES=[
 {id:'psa9',label:'PSA 9',grade:'PSA 9',color:'#38bdf8'},
 {id:'bgs95',label:'BGS 9.5',grade:'BGS 9.5',color:'#a78bfa'},
 {id:'auto95',label:'AUTO 9.5+',grade:'AUTO',color:'#4ade80'}
-];
-
-// These words in title = parallel/insert = skip
-var PARALLEL_KEYWORDS=[
-'instant impact','gridiron kings','elite series','the rookies','emergent',
-'luminance','stained glass','velocity','montage','virtual reality',
-'fathers day','memorial day','black friday','the 100','downtown',
-'red white blue','white sparkle','tie dye','freshman phenoms',
-'green parallel','blue parallel','red parallel','gold parallel',
-'orange parallel','purple parallel','pink parallel','silver parallel',
-'holo','hyper','disco','wave','pulsar','shimmer',
-'cracked ice','tiger stripe','mojo','peacock','neon','electric','lava','laser',
-'press proof','fast break','fotl','genesis','kaboom',
-'choice','breakaway','carolina blue','lucky green',
-'/299','/199','/149','/99','/75','/49','/35','/25','/15','/10','/5','/3','/2','/1','1/1'
-];
-
-// Words that confirm it IS a base card — these override parallel detection
-var BASE_CONFIRMERS=[
-'rated rookie #','rookie #','#269','#327','#236','#200','#144','#166',
-'bowman chrome #','bowman #','topps chrome #','topps #',
-'sp authentic','upper deck ud','fleer tradition','score #',
-'hoops #','nba hoops #','donruss #','panini prizm #'
 ];
 
 var DB={
@@ -309,19 +286,6 @@ auto95:[
 ]
 };
 
-function isParallelOrInsert(title){
-var t=title.toLowerCase();
-// Check if it has a base card confirmer — if so it's likely base
-for(var b=0;b<BASE_CONFIRMERS.length;b++){
-if(t.indexOf(BASE_CONFIRMERS[b])>=0)return false;
-}
-// Then check parallel keywords
-for(var i=0;i<PARALLEL_KEYWORDS.length;i++){
-if(t.indexOf(PARALLEL_KEYWORDS[i])>=0)return true;
-}
-return false;
-}
-
 function detectGradeFromTitle(title){
 var t=title.toUpperCase();
 if(/BGS\s*9\.5/.test(t))return'bgs95';
@@ -333,7 +297,6 @@ return null;
 }
 
 function getMarketValue(title,tabGradeId){
-if(isParallelOrInsert(title))return null;
 var t=title.toLowerCase();
 var actualGrade=detectGradeFromTitle(title)||tabGradeId;
 var values=DB[actualGrade]||DB[tabGradeId]||DB['psa10'];
@@ -452,27 +415,22 @@ var isAuction=(item.buyingOptions||[]).indexOf('AUCTION')>=0;
 var bid=getCurrentBid(item);
 if(isAuction&&(!bid||bid<=0))return null;
 if(!bid)return null;
-
-// Use live comps if available, otherwise fallback DB
 var mv=null;
 if(item.soldComps&&item.soldComps.mid&&item.soldComps.count>=2){
 var actualGrade=detectGradeFromTitle(item.title||'')||tabGradeId;
 mv={low:item.soldComps.low,high:item.soldComps.high,mid:item.soldComps.mid,
 grade:actualGrade,source:'live · '+item.soldComps.count+' sold'};
-// Still check for parallels even with live comps
-if(isParallelOrInsert(item.title||''))return null;
 }else{
 mv=getMarketValue(item.title||'',tabGradeId);
 }
 if(!mv)return null;
-
 var pct=Math.round(((bid-mv.mid)/mv.mid)*100);
-if(pct>-20)return null;
-var isFire=pct<=-40;
+if(pct>-15)return null;
+var isFire=pct<=-35;
 var gradeLabel={'psa10':'PSA 10','psa9':'PSA 9','bgs95':'BGS 9.5','auto95':'AUTO'}[mv.grade]||mv.grade;
 var text='';
-if(pct<=-40)text='🚨 '+Math.abs(pct)+'% below '+gradeLabel+' market. Bid immediately.';
-else if(pct<=-30)text='🔥 '+Math.abs(pct)+'% below '+gradeLabel+' market. Strong flip.';
+if(pct<=-35)text='🚨 '+Math.abs(pct)+'% below '+gradeLabel+' market. Bid immediately.';
+else if(pct<=-25)text='🔥 '+Math.abs(pct)+'% below '+gradeLabel+' market. Strong flip.';
 else text=Math.abs(pct)+'% below '+gradeLabel+' market. Worth bidding.';
 return{isFire:isFire,mv:mv,pct:pct,text:text,gradeLabel:gradeLabel,isAuction:isAuction};
 }
@@ -516,7 +474,7 @@ var area=document.getElementById('listingsArea');
 var d=scanData[activeGrade]||{};
 var tg=GRADES.find(function(t){return t.id===activeGrade;});
 if(!d.auctionDeals&&!d.buynowDeals&&!d.loading){
-area.innerHTML='<div class="empty">Hit RUN FULL SCAN<br/><span>$50–$500 · 20%+ below market · any player</span></div>';return;
+area.innerHTML='<div class="empty">Hit RUN FULL SCAN<br/><span>$25–$1000 · 15%+ below market · any player</span></div>';return;
 }
 if(d.loading){
 area.innerHTML='<div class="loading"><span class="spin">⟳</span><br/>'+(d.status||'Scanning...')+'</div>';return;
@@ -527,7 +485,7 @@ if(!deals.length){
 var other=activeView==='auction'?(d.buynowDeals||[]):(d.auctionDeals||[]);
 var otherLabel=activeView==='auction'?'Buy It Now':'Auctions';
 var hint=other.length>0?' Try '+otherLabel+' — '+other.length+' deal'+(other.length>1?'s':'')+' there.':'';
-area.innerHTML='<div class="no-deals">No 20%+ deals in this view for '+tg.label+'<br/><span style="color:#475569">Check back soon.'+hint+'</span></div>';
+area.innerHTML='<div class="no-deals">No 15%+ deals for '+tg.label+' right now<br/><span style="color:#475569">Check back soon.'+hint+'</span></div>';
 return;
 }
 area.innerHTML=deals.map(renderCard).join('');
