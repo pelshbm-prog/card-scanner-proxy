@@ -113,7 +113,7 @@ input{background:#070d1a;border:1px solid #1e293b;border-radius:8px;color:#e2e8f
 <div class="view-tab" id="viewAuction" onclick="setView('auction')">⏱ AUCTIONS W/ BIDS</div>
 <div class="view-tab" id="viewBuynow" onclick="setView('buynow')">💰 BUY IT NOW</div>
 </div>
-<div id="listingsArea"><div class="empty">Hit RUN FULL SCAN<br/><span>Real sold comps only · $50–$500 · 20%+ below market</span></div></div>
+<div id="listingsArea"><div class="empty">Hit RUN FULL SCAN<br/><span>$50–$500 · 20%+ below market · any player</span></div></div>
 </div>
 </div>
 <script>
@@ -125,23 +125,197 @@ var GRADES=[
 {id:'auto95',label:'AUTO 9.5+',grade:'AUTO',color:'#4ade80'}
 ];
 
+// These words in title = parallel/insert = skip
 var PARALLEL_KEYWORDS=[
 'instant impact','gridiron kings','elite series','the rookies','emergent',
-'luminance','stained glass','velocity','neo','montage','virtual reality',
+'luminance','stained glass','velocity','montage','virtual reality',
 'fathers day','memorial day','black friday','the 100','downtown',
-'red white blue','white sparkle','black and white','tie dye',
-'green prizm','red prizm','blue prizm','gold prizm','orange prizm','purple prizm',
-'pink prizm','silver prizm','bronze prizm','teal prizm','camo prizm',
-'holo','hyper','disco','camo','wave','pulsar','shimmer','ice',
-'cracked','tiger','mojo','peacock','neon','electric','lava','laser',
-'press proof','xr','scope','fotl','fast break','genesis','kaboom','stained',
-'choice','breakaway','pink','orange','purple','teal','carolina blue','lucky green',
-'numbered','refractor',
+'red white blue','white sparkle','tie dye','freshman phenoms',
+'green parallel','blue parallel','red parallel','gold parallel',
+'orange parallel','purple parallel','pink parallel','silver parallel',
+'holo','hyper','disco','wave','pulsar','shimmer',
+'cracked ice','tiger stripe','mojo','peacock','neon','electric','lava','laser',
+'press proof','fast break','fotl','genesis','kaboom',
+'choice','breakaway','carolina blue','lucky green',
 '/299','/199','/149','/99','/75','/49','/35','/25','/15','/10','/5','/3','/2','/1','1/1'
 ];
 
+// Words that confirm it IS a base card — these override parallel detection
+var BASE_CONFIRMERS=[
+'rated rookie #','rookie #','#269','#327','#236','#200','#144','#166',
+'bowman chrome #','bowman #','topps chrome #','topps #',
+'sp authentic','upper deck ud','fleer tradition','score #',
+'hoops #','nba hoops #','donruss #','panini prizm #'
+];
+
+var DB={
+psa10:[
+{p:'mahomes',s:'prizm',low:4200,high:5800},
+{p:'mahomes',s:'donruss',low:750,high:1050},
+{p:'mahomes',s:'optic',low:700,high:950},
+{p:'mahomes',s:'contenders',low:550,high:850},
+{p:'mahomes',s:'select',low:450,high:700},
+{p:'mahomes',s:'spectra',low:900,high:1400},
+{p:'mahomes',s:'topps chrome',low:350,high:600},
+{p:'mahomes',s:'topps',low:220,high:380},
+{p:'mahomes',s:'score',low:180,high:280},
+{p:'mahomes',s:'absolute',low:280,high:450},
+{p:'mahomes',s:'mosaic',low:280,high:420},
+{p:'brady',s:'bowman chrome',low:11000,high:14500},
+{p:'brady',s:'bowman',low:900,high:1400},
+{p:'brady',s:'topps chrome',low:3200,high:5000},
+{p:'brady',s:'playoff contenders',low:3500,high:6000},
+{p:'brady',s:'contenders',low:3500,high:6000},
+{p:'brady',s:'sp authentic',low:900,high:1500},
+{p:'brady',s:'upper deck',low:450,high:750},
+{p:'brady',s:'fleer',low:380,high:650},
+{p:'brady',s:'score',low:280,high:480},
+{p:'brady',s:'topps',low:700,high:1100},
+{p:'josh allen',s:'prizm',low:350,high:600},
+{p:'josh allen',s:'donruss',low:180,high:320},
+{p:'josh allen',s:'select',low:280,high:450},
+{p:'josh allen',s:'optic',low:280,high:450},
+{p:'lamar jackson',s:'prizm',low:280,high:450},
+{p:'lamar jackson',s:'donruss',low:150,high:280},
+{p:'burrow',s:'prizm',low:180,high:320},
+{p:'burrow',s:'donruss',low:90,high:160},
+{p:'burrow',s:'select',low:140,high:250},
+{p:'herbert',s:'prizm',low:130,high:240},
+{p:'herbert',s:'donruss',low:70,high:130},
+{p:'caleb williams',s:'prizm',low:80,high:160},
+{p:'caleb williams',s:'donruss',low:50,high:100},
+{p:'jayden daniels',s:'prizm',low:60,high:120},
+{p:'jeanty',s:'prizm',low:50,high:110},
+{p:'jeanty',s:'donruss',low:30,high:65},
+{p:'stroud',s:'prizm',low:80,high:160},
+{p:'wembanyama',s:'prizm',low:130,high:180},
+{p:'wembanyama',s:'hoops',low:60,high:90},
+{p:'wembanyama',s:'donruss',low:80,high:130},
+{p:'flagg',s:'topps chrome',low:380,high:520},
+{p:'flagg',s:'prizm',low:300,high:480},
+{p:'flagg',s:'hoops',low:80,high:140},
+{p:'anthony edwards',s:'prizm',low:180,high:280},
+{p:'anthony edwards',s:'hoops',low:50,high:90},
+{p:'luka',s:'prizm',low:450,high:750},
+{p:'luka',s:'donruss',low:180,high:320},
+{p:'tatum',s:'prizm',low:180,high:300},
+{p:'tatum',s:'donruss',low:90,high:160},
+{p:'gilgeous',s:'prizm',low:130,high:220},
+{p:'ja morant',s:'prizm',low:180,high:320},
+{p:'devin booker',s:'prizm',low:130,high:240},
+{p:'giannis',s:'topps',low:300,high:500},
+{p:'curry',s:'topps',low:400,high:650},
+{p:'curry',s:'prizm',low:800,high:1300},
+{p:'judge',s:'topps chrome',low:280,high:450},
+{p:'judge',s:'topps',low:180,high:300},
+{p:'ohtani',s:'topps chrome',low:350,high:550},
+{p:'ohtani',s:'topps',low:250,high:400},
+{p:'trout',s:'topps chrome',low:600,high:950},
+{p:'acuna',s:'topps chrome',low:180,high:320},
+{p:'travis kelce',s:'prizm',low:130,high:240},
+{p:'justin jefferson',s:'prizm',low:100,high:180},
+{p:'tyreek hill',s:'prizm',low:100,high:180},
+{p:'christian mccaffrey',s:'prizm',low:100,high:180},
+{p:'saquon barkley',s:'prizm',low:80,high:150},
+{p:'derrick henry',s:'prizm',low:80,high:150},
+{p:'peyton manning',s:'topps chrome',low:280,high:450},
+{p:'peyton manning',s:'topps',low:180,high:320},
+{p:'aaron rodgers',s:'topps chrome',low:180,high:320},
+{p:'dak prescott',s:'prizm',low:80,high:150}
+],
+psa9:[
+{p:'mahomes',s:'prizm',low:900,high:1200},
+{p:'mahomes',s:'donruss',low:230,high:400},
+{p:'mahomes',s:'optic',low:220,high:380},
+{p:'mahomes',s:'contenders',low:180,high:320},
+{p:'mahomes',s:'topps chrome',low:120,high:220},
+{p:'mahomes',s:'score',low:70,high:120},
+{p:'mahomes',s:'select',low:150,high:260},
+{p:'brady',s:'bowman chrome',low:3200,high:4800},
+{p:'brady',s:'bowman',low:280,high:480},
+{p:'brady',s:'topps chrome',low:1100,high:1900},
+{p:'brady',s:'contenders',low:1200,high:2200},
+{p:'brady',s:'upper deck',low:140,high:260},
+{p:'brady',s:'fleer',low:130,high:240},
+{p:'brady',s:'score',low:100,high:180},
+{p:'brady',s:'topps',low:240,high:420},
+{p:'josh allen',s:'prizm',low:130,high:240},
+{p:'josh allen',s:'donruss',low:70,high:130},
+{p:'lamar jackson',s:'prizm',low:100,high:180},
+{p:'burrow',s:'prizm',low:70,high:130},
+{p:'burrow',s:'donruss',low:35,high:65},
+{p:'herbert',s:'prizm',low:50,high:95},
+{p:'caleb williams',s:'prizm',low:30,high:60},
+{p:'jayden daniels',s:'prizm',low:24,high:48},
+{p:'wembanyama',s:'prizm',low:50,high:90},
+{p:'wembanyama',s:'hoops',low:22,high:42},
+{p:'flagg',s:'topps chrome',low:140,high:220},
+{p:'flagg',s:'prizm',low:110,high:190},
+{p:'anthony edwards',s:'prizm',low:65,high:115},
+{p:'luka',s:'prizm',low:160,high:280},
+{p:'tatum',s:'prizm',low:65,high:120},
+{p:'ja morant',s:'prizm',low:70,high:130},
+{p:'curry',s:'topps',low:150,high:260},
+{p:'judge',s:'topps chrome',low:100,high:180},
+{p:'ohtani',s:'topps chrome',low:130,high:230},
+{p:'trout',s:'topps chrome',low:220,high:380},
+{p:'travis kelce',s:'prizm',low:55,high:105},
+{p:'justin jefferson',s:'prizm',low:40,high:80},
+{p:'peyton manning',s:'topps chrome',low:100,high:180}
+],
+bgs95:[
+{p:'mahomes',s:'prizm',low:2200,high:3500},
+{p:'mahomes',s:'donruss',low:420,high:680},
+{p:'mahomes',s:'optic',low:400,high:650},
+{p:'mahomes',s:'contenders',low:320,high:520},
+{p:'mahomes',s:'spectra',low:550,high:900},
+{p:'brady',s:'bowman chrome',low:7000,high:10500},
+{p:'brady',s:'topps chrome',low:2000,high:3500},
+{p:'brady',s:'contenders',low:2100,high:3600},
+{p:'brady',s:'bowman',low:550,high:950},
+{p:'josh allen',s:'prizm',low:200,high:360},
+{p:'lamar jackson',s:'prizm',low:160,high:290},
+{p:'burrow',s:'prizm',low:110,high:200},
+{p:'wembanyama',s:'prizm',low:95,high:160},
+{p:'luka',s:'prizm',low:270,high:450},
+{p:'flagg',s:'topps chrome',low:240,high:380},
+{p:'anthony edwards',s:'prizm',low:110,high:190},
+{p:'tatum',s:'prizm',low:110,high:190},
+{p:'judge',s:'topps chrome',low:160,high:280},
+{p:'ohtani',s:'topps chrome',low:210,high:350},
+{p:'trout',s:'topps chrome',low:380,high:620},
+{p:'travis kelce',s:'prizm',low:80,high:150}
+],
+auto95:[
+{p:'mahomes',s:'',low:3000,high:6000},
+{p:'brady',s:'',low:1500,high:3500},
+{p:'josh allen',s:'',low:500,high:950},
+{p:'lamar jackson',s:'',low:400,high:780},
+{p:'burrow',s:'',low:300,high:580},
+{p:'herbert',s:'',low:180,high:380},
+{p:'caleb williams',s:'',low:120,high:280},
+{p:'jayden daniels',s:'',low:100,high:220},
+{p:'jeanty',s:'',low:80,high:200},
+{p:'wembanyama',s:'',low:500,high:1000},
+{p:'flagg',s:'',low:200,high:500},
+{p:'luka',s:'',low:800,high:1600},
+{p:'tatum',s:'',low:300,high:600},
+{p:'anthony edwards',s:'',low:250,high:500},
+{p:'ohtani',s:'',low:400,high:900},
+{p:'judge',s:'',low:280,high:550},
+{p:'trout',s:'',low:350,high:700},
+{p:'travis kelce',s:'',low:200,high:450},
+{p:'justin jefferson',s:'',low:150,high:320}
+]
+};
+
 function isParallelOrInsert(title){
 var t=title.toLowerCase();
+// Check if it has a base card confirmer — if so it's likely base
+for(var b=0;b<BASE_CONFIRMERS.length;b++){
+if(t.indexOf(BASE_CONFIRMERS[b])>=0)return false;
+}
+// Then check parallel keywords
 for(var i=0;i<PARALLEL_KEYWORDS.length;i++){
 if(t.indexOf(PARALLEL_KEYWORDS[i])>=0)return true;
 }
@@ -156,6 +330,23 @@ if(/PSA\s*9(?!\.5|\s*10)/.test(t))return'psa9';
 if(/SGC\s*10/.test(t))return'psa10';
 if(/SGC\s*9\.5/.test(t))return'bgs95';
 return null;
+}
+
+function getMarketValue(title,tabGradeId){
+if(isParallelOrInsert(title))return null;
+var t=title.toLowerCase();
+var actualGrade=detectGradeFromTitle(title)||tabGradeId;
+var values=DB[actualGrade]||DB[tabGradeId]||DB['psa10'];
+var best=null,bestScore=0;
+for(var i=0;i<values.length;i++){
+var c=values[i];
+if(t.indexOf(c.p)<0)continue;
+var score=1;
+if(c.s&&c.s.length>0){if(t.indexOf(c.s)<0)continue;score+=c.s.split(' ').length;}
+if(score>bestScore){bestScore=score;best=c;}
+}
+if(!best)return null;
+return{low:best.low,high:best.high,mid:(best.low+best.high)/2,grade:actualGrade,source:'est'};
 }
 
 var clientId='',clientSecret='',activeGrade='psa10',activeView='auction',activeWindow=2,scanData={},scanning=false;
@@ -261,21 +452,24 @@ var isAuction=(item.buyingOptions||[]).indexOf('AUCTION')>=0;
 var bid=getCurrentBid(item);
 if(isAuction&&(!bid||bid<=0))return null;
 if(!bid)return null;
-if(isParallelOrInsert(item.title||''))return null;
-// Only use live sold comps — no fallback DB
-if(!item.soldComps||item.soldComps.count<3)return null;
+
+// Use live comps if available, otherwise fallback DB
+var mv=null;
+if(item.soldComps&&item.soldComps.mid&&item.soldComps.count>=2){
 var actualGrade=detectGradeFromTitle(item.title||'')||tabGradeId;
-var gradeLabel={'psa10':'PSA 10','psa9':'PSA 9','bgs95':'BGS 9.5','auto95':'AUTO'}[actualGrade]||actualGrade;
-var mv={
-low:item.soldComps.low,
-high:item.soldComps.high,
-mid:item.soldComps.mid,
-grade:actualGrade,
-source:'live · '+item.soldComps.count+' sold'
-};
+mv={low:item.soldComps.low,high:item.soldComps.high,mid:item.soldComps.mid,
+grade:actualGrade,source:'live · '+item.soldComps.count+' sold'};
+// Still check for parallels even with live comps
+if(isParallelOrInsert(item.title||''))return null;
+}else{
+mv=getMarketValue(item.title||'',tabGradeId);
+}
+if(!mv)return null;
+
 var pct=Math.round(((bid-mv.mid)/mv.mid)*100);
 if(pct>-20)return null;
 var isFire=pct<=-40;
+var gradeLabel={'psa10':'PSA 10','psa9':'PSA 9','bgs95':'BGS 9.5','auto95':'AUTO'}[mv.grade]||mv.grade;
 var text='';
 if(pct<=-40)text='🚨 '+Math.abs(pct)+'% below '+gradeLabel+' market. Bid immediately.';
 else if(pct<=-30)text='🔥 '+Math.abs(pct)+'% below '+gradeLabel+' market. Strong flip.';
@@ -322,7 +516,7 @@ var area=document.getElementById('listingsArea');
 var d=scanData[activeGrade]||{};
 var tg=GRADES.find(function(t){return t.id===activeGrade;});
 if(!d.auctionDeals&&!d.buynowDeals&&!d.loading){
-area.innerHTML='<div class="empty">Hit RUN FULL SCAN<br/><span>Real sold comps only · $50–$500 · 20%+ below market</span></div>';return;
+area.innerHTML='<div class="empty">Hit RUN FULL SCAN<br/><span>$50–$500 · 20%+ below market · any player</span></div>';return;
 }
 if(d.loading){
 area.innerHTML='<div class="loading"><span class="spin">⟳</span><br/>'+(d.status||'Scanning...')+'</div>';return;
@@ -364,7 +558,7 @@ var gi=0;
 function nextGrade(){
 if(gi>=GRADES.length){scanning=false;btn.disabled=false;btn.textContent='⚡ RUN FULL SCAN';return;}
 var tg=GRADES[gi];gi++;
-scanData[tg.id]={loading:true,auctionDeals:[],buynowDeals:[],error:null,status:'Scanning '+tg.label+' · '+activeWindow+'hr window...'};
+scanData[tg.id]={loading:true,auctionDeals:[],buynowDeals:[],error:null,status:'Scanning '+tg.label+'...'};
 updateTabs();if(activeGrade===tg.id)renderListings();
 var url=PROXY+'/scan?clientId='+encodeURIComponent(clientId)+'&clientSecret='+encodeURIComponent(clientSecret)+'&grade='+encodeURIComponent(tg.grade)+'&window='+activeWindow;
 fetchWithRetry(url,2,4000).then(function(data){
