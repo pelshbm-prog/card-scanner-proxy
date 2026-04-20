@@ -114,25 +114,24 @@ async function getSoldComps(appId, title, grade) {
   }
 }
 
-async function searchCards(token, grade, buyingOption, windowHours) {
+async function searchAuctions(token, grade, windowHours) {
   try {
     const gradeQuery = grade === 'AUTO'
       ? 'rookie auto graded PSA BGS SGC'
       : `rookie ${grade}`;
 
     const now = new Date().toISOString();
-    const windowMs = (windowHours || 2) * 3600000;
-    const windowEnd = new Date(Date.now() + windowMs).toISOString();
+    // Hard cap at 24 hours max — no exceptions
+    const hours = Math.min(windowHours || 2, 24);
+    const windowEnd = new Date(Date.now() + hours * 3600000).toISOString();
 
-    let filter = `price:[25..1000],priceCurrency:USD,buyingOptions:{${buyingOption}}`;
-    if (buyingOption === 'AUCTION') {
-      filter += `,endTimeFrom:${now},endTimeTo:${windowEnd}`;
-    }
+    // Auctions only — hard enforced end time window
+    const filter = `price:[25..1000],priceCurrency:USD,buyingOptions:{AUCTION},endTimeFrom:${now},endTimeTo:${windowEnd}`;
 
     const url = `https://api.ebay.com/buy/browse/v1/item_summary/search`
       + `?q=${encodeURIComponent(gradeQuery + ' -reprint -lot -custom -break')}`
       + `&category_ids=261328`
-      + `&sort=${buyingOption === 'AUCTION' ? 'endingSoonest' : 'newlyListed'}`
+      + `&sort=endingSoonest`
       + `&limit=50`
       + `&filter=${encodeURIComponent(filter)}`;
 
@@ -168,8 +167,7 @@ function filterByGrade(items, grade) {
 
 function removeZeroBidAuctions(items) {
   return items.filter(item => {
-    const isAuction = (item.buyingOptions || []).includes('AUCTION');
-    if (!isAuction) return true;
+    // Remove Best Offer listings
     if ((item.buyingOptions || []).includes('BEST_OFFER')) return false;
     const bid = item.currentBidPrice || item.price;
     const bidVal = bid ? parseFloat(bid.value) : 0;
@@ -177,42 +175,51 @@ function removeZeroBidAuctions(items) {
   });
 }
 
+function enforceEndTimeWindow(items, windowHours) {
+  const maxMs = Math.min(windowHours || 2, 24) * 3600000;
+  const cutoff = Date.now() + maxMs;
+  return items.filter(item => {
+    if (!item.itemEndDate) return false;
+    const endMs = new Date(item.itemEndDate).getTime();
+    // Must end within window AND in the future
+    return endMs > Date.now() && endMs <= cutoff;
+  });
+}
+
 app.get('/scan', async (req, res) => {
   try {
     const { clientId, clientSecret, grade, window } = req.query;
-    const windowHours = parseFloat(window) || 2;
+    const windowHours = Math.min(parseFloat(window) || 2, 24);
     const token = await getToken(clientId, clientSecret);
 
-    const [auctionItems, fixedItems] = await Promise.all([
-      searchCards(token, grade, 'AUCTION', windowHours),
-      searchCards(token, grade, 'FIXED_PRICE', windowHours)
-    ]);
+    const auctionItems = await searchAuctions(token, grade, windowHours);
 
     const seen = {};
-    const all = [...auctionItems, ...fixedItems].filter(item => {
+    const unique = auctionItems.filter(item => {
       if (seen[item.itemId]) return false;
       seen[item.itemId] = true;
       return true;
     });
 
-    const gradeFiltered = filterByGrade(all, grade || 'PSA 10');
+    // Filter by grade
+    const gradeFiltered = filterByGrade(unique, grade || 'PSA 10');
+
+    // Remove zero bids and best offer
     const withBids = removeZeroBidAuctions(gradeFiltered);
 
-    withBids.sort((a, b) => {
-      const aIsAuction = (a.buyingOptions || []).includes('AUCTION');
-      const bIsAuction = (b.buyingOptions || []).includes('AUCTION');
-      if (aIsAuction && !bIsAuction) return -1;
-      if (!aIsAuction && bIsAuction) return 1;
-      if (aIsAuction && bIsAuction) {
-        const ta = a.itemEndDate ? new Date(a.itemEndDate).getTime() : 9999999999999;
-        const tb = b.itemEndDate ? new Date(b.itemEndDate).getTime() : 9999999999999;
-        return ta - tb;
-      }
-      return 0;
+    // Double-enforce end time window client side too
+    const inWindow = enforceEndTimeWindow(withBids, windowHours);
+
+    // Sort ending soonest first
+    inWindow.sort((a, b) => {
+      const ta = new Date(a.itemEndDate).getTime();
+      const tb = new Date(b.itemEndDate).getTime();
+      return ta - tb;
     });
 
-    const top = withBids.slice(0, 40);
+    const top = inWindow.slice(0, 40);
 
+    // Get sold comps
     const batchSize = 10;
     for (let i = 0; i < top.length; i += batchSize) {
       const batch = top.slice(i, i + batchSize);
