@@ -20,22 +20,21 @@ async function getToken(clientId, clientSecret) {
   return data.access_token;
 }
 
-// Extract player name and set from title for broader comp search
 function extractCardInfo(title) {
   const t = title.toLowerCase();
-  // Common player names
   const players = [
     'mahomes','brady','josh allen','lamar jackson','burrow','herbert',
     'stroud','caleb williams','jayden daniels','jeanty','prescott',
     'wembanyama','flagg','anthony edwards','luka','tatum','sga','gilgeous',
     'ja morant','booker','giannis','curry','lebron',
-    'judge','ohtani','trout','acuna','soto','witt','betts',
-    'jefferson','hill','kelce','mccaffrey','henry','barkley'
+    'judge','ohtani','trout','acuna','soto','witt',
+    'jefferson','hill','kelce','mccaffrey','henry','barkley',
+    'manning','rodgers','montana','elway','favre'
   ];
   const sets = [
     'prizm','donruss','topps chrome','bowman chrome','contenders',
     'optic','select','hoops','mosaic','score','topps','bowman','fleer',
-    'upper deck','sp authentic'
+    'upper deck','sp authentic','spectra','national treasures'
   ];
   let player = players.find(p => t.includes(p)) || '';
   let set = sets.find(s => t.includes(s)) || '';
@@ -45,21 +44,17 @@ function extractCardInfo(title) {
 async function getSoldComps(appId, title, grade) {
   try {
     const { player, set } = extractCardInfo(title);
-
-    // Build a focused but not too specific query
     let query = '';
     if (player && set) {
       query = `${player} ${set} rookie ${grade}`;
     } else if (player) {
       query = `${player} rookie ${grade}`;
     } else {
-      // Fall back to cleaned title
       query = title
         .replace(/\d+\/\d+/g, '')
         .replace(/R\d{4,}/gi, '')
         .replace(/PSA\s*\d+(\.\d+)?/gi, '')
         .replace(/BGS\s*\d+(\.\d+)?/gi, '')
-        .replace(/SGC\s*\d+(\.\d+)?/gi, '')
         .replace(/GEM\s*MINT/gi, '')
         .trim()
         .slice(0, 50) + ' ' + grade;
@@ -86,7 +81,6 @@ async function getSoldComps(appId, title, grade) {
     const data = await r.json();
     const items = (data?.findCompletedItemsResponse?.[0]?.searchResult?.[0]?.item) || [];
 
-    // Last 90 days only
     const ninetyDaysAgo = Date.now() - (90 * 24 * 60 * 60 * 1000);
 
     const prices = items
@@ -106,15 +100,12 @@ async function getSoldComps(appId, title, grade) {
     prices.sort((a, b) => a - b);
     const trimmed = prices.length >= 5 ? prices.slice(1, -1) : prices;
     const avg = trimmed.reduce((s, p) => s + p, 0) / trimmed.length;
-    const low = Math.min(...trimmed);
-    const high = Math.max(...trimmed);
 
-    // Sanity check
-    if (high / low > 8) return null;
+    if (Math.max(...trimmed) / Math.min(...trimmed) > 8) return null;
 
     return {
-      low: Math.round(low),
-      high: Math.round(high),
+      low: Math.round(Math.min(...trimmed)),
+      high: Math.round(Math.max(...trimmed)),
       mid: Math.round(avg),
       count: prices.length
     };
@@ -133,7 +124,7 @@ async function searchCards(token, grade, buyingOption, windowHours) {
     const windowMs = (windowHours || 2) * 3600000;
     const windowEnd = new Date(Date.now() + windowMs).toISOString();
 
-    let filter = `price:[50..500],priceCurrency:USD,buyingOptions:{${buyingOption}}`;
+    let filter = `price:[25..1000],priceCurrency:USD,buyingOptions:{${buyingOption}}`;
     if (buyingOption === 'AUCTION') {
       filter += `,endTimeFrom:${now},endTimeTo:${windowEnd}`;
     }
@@ -222,7 +213,6 @@ app.get('/scan', async (req, res) => {
 
     const top = withBids.slice(0, 40);
 
-    // Get comps in batches of 10
     const batchSize = 10;
     for (let i = 0; i < top.length; i += batchSize) {
       const batch = top.slice(i, i + batchSize);
